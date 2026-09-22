@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/maho0638/proofjudge-genlayer/actions/workflows/ci.yml/badge.svg)](https://github.com/maho0638/proofjudge-genlayer/actions/workflows/ci.yml)
 
+**Live demo:** https://proofjudge-genlayer-frontend.vercel.app
+
 ProofJudge is a GenLayer-native application for reviewing bounty submissions, freelance deliverables, grant milestones, and community tasks using real web evidence plus validator consensus.
 
 ## Why GenLayer is central
