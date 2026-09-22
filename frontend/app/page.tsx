@@ -78,7 +78,7 @@ export default function Home() {
   const [reviewId, setReviewId] = useState("demo-1");
   const [requirement, setRequirement] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
-  const [lookupId, setLookupId] = useState("demo-1");
+  const [lookupId, setLookupId] = useState("studionet-smoke-v1");
   const [result, setResult] = useState<any>(null);
   const [status, setStatus] = useState("Ready");
 
@@ -165,6 +165,22 @@ export default function Home() {
         <div className="status">{status}</div>
       </header>
 
+      <section className="livebar">
+        <div>
+          <span className="liveDot" />
+          <strong>Live on GenLayer Studionet</strong>
+          <small>Chain ID 61999</small>
+        </div>
+        <code>{contractAddress}</code>
+        <a
+          href={`https://explorer-studio.genlayer.com/address/${contractAddress}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          View contract ↗
+        </a>
+      </section>
+
       <section className="grid">
         <form className="card" onSubmit={submitReview}>
           <h2>Submit evidence</h2>
@@ -200,6 +216,10 @@ export default function Home() {
 
         <div className="card">
           <h2>Resolve & inspect</h2>
+          <p className="hint">
+            The prefilled ID is a verified live smoke test that resolved through
+            GenLayer validator consensus.
+          </p>
 
           <label>
             Review ID
@@ -222,6 +242,18 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="proof">
+        <span>Verified live result</span>
+        <strong>Approved · 99/100 confidence</strong>
+        <a
+          href="https://explorer-studio.genlayer.com/address/0x52D23490C660d184b14087007E6B56126ed0B069"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Inspect on GenLayer Explorer ↗
+        </a>
+      </section>
+
       <section className="steps">
         <div>
           <b>1</b>
@@ -236,6 +268,17 @@ export default function Home() {
           <span>Validators reach consensus and store the verdict on-chain.</span>
         </div>
       </section>
+
+      <footer>
+        <a
+          href="https://github.com/maho0638/proofjudge-genlayer"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Source on GitHub ↗
+        </a>
+        <span>ProofJudge · GenLayer Intelligent Contract</span>
+      </footer>
     </main>
   );
 }
