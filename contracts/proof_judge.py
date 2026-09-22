@@ -93,19 +93,19 @@ Rules:
         evidence_url = evidence_url.strip()
 
         if not review_id or not requirement or not evidence_url:
-            raise Exception("Missing required field")
+            raise gl.vm.UserError("Missing required field")
 
         if len(review_id) > 96:
-            raise Exception("Review ID too long")
+            raise gl.vm.UserError("Review ID too long")
 
         if len(requirement) > 2000:
-            raise Exception("Requirement too long")
+            raise gl.vm.UserError("Requirement too long")
 
         if not evidence_url.startswith("https://"):
-            raise Exception("Evidence URL must use HTTPS")
+            raise gl.vm.UserError("Evidence URL must use HTTPS")
 
         if review_id in self.reviews:
-            raise Exception("Review already exists")
+            raise gl.vm.UserError("Review already exists")
 
         self.reviews[review_id] = Review(
             id=review_id,
@@ -120,12 +120,12 @@ Rules:
     @gl.public.write
     def resolve_review(self, review_id: str) -> None:
         if review_id not in self.reviews:
-            raise Exception("Review not found")
+            raise gl.vm.UserError("Review not found")
 
         review = self.reviews[review_id]
 
         if review.status != "pending":
-            raise Exception("Review already resolved")
+            raise gl.vm.UserError("Review already resolved")
 
         verdict = self._evaluate(review.requirement, review.evidence_url)
 
@@ -140,7 +140,7 @@ Rules:
     @gl.public.view
     def get_review(self, review_id: str) -> Review:
         if review_id not in self.reviews:
-            raise Exception("Review not found")
+            raise gl.vm.UserError("Review not found")
         return self.reviews[review_id]
 
     @gl.public.view
