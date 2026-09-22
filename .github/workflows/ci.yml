@@ -16,6 +16,7 @@ jobs:
       - run: pip install -r requirements.txt
       - run: pytest tests/direct -v
       - run: genvm-lint check contracts/proof_judge.py
+      - run: genvm-lint check contracts/source_verifier.py
 
   frontend:
     runs-on: ubuntu-latest
