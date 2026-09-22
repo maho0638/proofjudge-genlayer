@@ -27,18 +27,21 @@ def test_resolve_on_deployed_studionet_contract():
             "The evidence page must identify itself as Example Domain.",
             "https://example.com",
         ]
-    )
+    ).transact(wait_interval=3000, wait_retries=50)
     assert tx_execution_succeeded(submit)
     print(f"PROOFJUDGE_SUBMIT_RECEIPT={submit}", flush=True)
 
-    pending = contract.get_review(args=[review_id])
+    pending = contract.get_review(args=[review_id]).call()
     assert _field(pending, "status") == "pending"
 
-    resolve = contract.resolve_review(args=[review_id])
+    resolve = contract.resolve_review(args=[review_id]).transact(
+        wait_interval=10000,
+        wait_retries=40,
+    )
     assert tx_execution_succeeded(resolve)
     print(f"PROOFJUDGE_RESOLVE_RECEIPT={resolve}", flush=True)
 
-    final = contract.get_review(args=[review_id])
+    final = contract.get_review(args=[review_id]).call()
     status = _field(final, "status")
     confidence = int(_field(final, "confidence"))
     summary = str(_field(final, "summary"))
