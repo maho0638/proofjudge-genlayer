@@ -16,6 +16,14 @@ Traditional smart contracts cannot open an arbitrary evidence URL, understand a 
 
 This maps directly to real bounty review, milestone verification and performance-based contracting.
 
+## Live Studionet Deployment
+
+- **Network:** GenLayer Studionet (chain ID 61999)
+- **Contract:** `0x52D23490C660d184b14087007E6B56126ed0B069`
+- **Explorer:** https://explorer-studio.genlayer.com/address/0x52D23490C660d184b14087007E6B56126ed0B069
+- **Deployment:** completed through the GenLayer Studionet integration workflow
+- **Verification:** end-to-end submit → resolve → read smoke test is included in `tests/integration/test_studionet_smoke.py`
+
 ## Project status
 
 MVP source is included:
