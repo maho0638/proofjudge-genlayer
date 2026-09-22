@@ -1,0 +1,14 @@
+{
+  "name": "proofjudge-genlayer",
+  "private": true,
+  "type": "module",
+  "workspaces": ["frontend"],
+  "scripts": {
+    "deploy": "genlayer deploy",
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build"
+  },
+  "devDependencies": {
+    "genlayer-js": "^1.1.8"
+  }
+}
