@@ -22,7 +22,11 @@ This maps directly to real bounty review, milestone verification and performance
 - **Contract:** `0x52D23490C660d184b14087007E6B56126ed0B069`
 - **Explorer:** https://explorer-studio.genlayer.com/address/0x52D23490C660d184b14087007E6B56126ed0B069
 - **Deployment:** completed through the GenLayer Studionet integration workflow
-- **Verification:** end-to-end submit → resolve → read smoke test is included in `tests/integration/test_studionet_smoke.py`
+- **Verification:** end-to-end submit → resolve → read smoke test passed on Studionet
+- **Submit tx:** `0xeddbd86a8b8fb29d95f213cb566d9649f988343ee613f6e0bb2953b1a14298d0`
+- **Resolve tx:** `0xc93a299c8fab59fc6f67a11858343a698786a74a335109e7a2b38b2500ec547f`
+- **Consensus result:** approved · confidence 99/100
+- **Smoke test:** `tests/integration/test_studionet_smoke.py`
 
 ## Project status
 
