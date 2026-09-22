@@ -46,7 +46,7 @@ def test_resolve_approved(direct_vm, direct_deploy, direct_alice):
         },
     )
     direct_vm.mock_llm(
-        r".*evaluating evidence for a task completion claim.*",
+        r"(?s).*evaluating public evidence for a task-completion claim.*",
         json.dumps(
             {
                 "approved": True,
@@ -79,7 +79,7 @@ def test_resolve_rejected(direct_vm, direct_deploy, direct_alice):
         {"status": 200, "body": "Coming soon. No demo is available."},
     )
     direct_vm.mock_llm(
-        r".*evaluating evidence for a task completion claim.*",
+        r"(?s).*evaluating public evidence for a task-completion claim.*",
         json.dumps(
             {
                 "approved": False,
@@ -107,7 +107,7 @@ def test_cannot_resolve_twice(direct_vm, direct_deploy, direct_alice):
         {"status": 200, "body": "Evidence is public."},
     )
     direct_vm.mock_llm(
-        r".*evaluating evidence for a task completion claim.*",
+        r"(?s).*evaluating public evidence for a task-completion claim.*",
         json.dumps(
             {
                 "approved": True,
