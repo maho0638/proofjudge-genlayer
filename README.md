@@ -1,5 +1,7 @@
 # ProofJudge — AI Evidence Verification on GenLayer
 
+[![CI](https://github.com/maho0638/proofjudge-genlayer/actions/workflows/ci.yml/badge.svg)](https://github.com/maho0638/proofjudge-genlayer/actions/workflows/ci.yml)
+
 ProofJudge is a GenLayer-native application for reviewing bounty submissions, freelance deliverables, grant milestones, and community tasks using real web evidence plus validator consensus.
 
 ## Why GenLayer is central
