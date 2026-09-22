@@ -44,6 +44,45 @@ A deterministic smart contract cannot open arbitrary public webpages and reason 
 - Direct tests: `tests/direct/test_source_verifier.py`
 - Studionet smoke test: `tests/integration/test_source_verifier_studionet.py`
 
-## Current verification status
+## Live Studionet deployment
 
-Direct tests and GenVM lint are executed by GitHub Actions. A separate live Studionet workflow deploys the contract and verifies a stable factual claim against two public sources.
+- **Network:** GenLayer Studionet (chain ID 61999)
+- **Contract:** `0x10F95C997358EfbFfc586979ED8E4c6568609B5c`
+- **Explorer:** https://explorer-studio.genlayer.com/address/0x10F95C997358EfbFfc586979ED8E4c6568609B5c
+- **Live verify transaction:** `0xdff346bd4b4bd87546b577879c25f0f9ee805e2dd1d629d4263776aef6d2086d`
+- **Transaction explorer:** https://explorer-studio.genlayer.com/tx/0xdff346bd4b4bd87546b577879c25f0f9ee805e2dd1d629d4263776aef6d2086d
+- **Studionet workflow:** https://github.com/maho0638/proofjudge-genlayer/actions/runs/35790275957
+
+## Verified live result
+
+The live smoke test checked this claim:
+
+> example.com is intended for use in documentation examples.
+
+Against two independent public sources:
+
+1. https://example.com
+2. https://www.iana.org/help/example-domains
+
+The stored consensus-backed result was:
+
+- verdict: `supported`
+- confidence: `98/100`
+- sources agreeing: `2/2`
+- consensus result: `MAJORITY_AGREE`
+
+## Automated validation
+
+GitHub Actions currently verifies:
+
+- SourceVerifier supported-claim path
+- contradicted-claim path
+- duplicate ID rejection
+- same-source rejection
+- non-HTTPS rejection
+- GenVM lint
+- GenVM validation
+- live Studionet deploy + real web + LLM + validator consensus
+
+Latest validation run: https://github.com/maho0638/proofjudge-genlayer/actions/runs/35790271756
+
