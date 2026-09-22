@@ -3,6 +3,10 @@
 import { FormEvent, useState } from "react";
 import { createClient } from "genlayer-js";
 import { studionet } from "genlayer-js/chains";
+import {
+  estimateWriteFeePreset,
+  feePresetToTransactionFees,
+} from "../lib/fees";
 
 declare global {
   interface Window {
@@ -12,20 +16,61 @@ declare global {
   }
 }
 
-const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}` | undefined;
+const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as
+  | `0x${string}`
+  | undefined;
 
 function makeClient(account?: string) {
-  return createClient({
+  const config: any = {
     chain: studionet,
-    ...(account ? { account: account as `0x${string}` } : {}),
-  } as any);
+  };
+
+  if (account) config.account = account as `0x${string}`;
+
+  const endpoint = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL;
+  if (endpoint) config.endpoint = endpoint;
+
+  return createClient(config);
 }
 
 async function walletAddress() {
-  if (!window.ethereum) throw new Error("MetaMask is required for write actions.");
-  const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+  if (!window.ethereum) {
+    throw new Error("MetaMask is required for write actions.");
+  }
+
+  const accounts = await window.ethereum.request({
+    method: "eth_requestAccounts",
+  });
+
   if (!accounts?.[0]) throw new Error("No wallet account selected.");
   return accounts[0] as string;
+}
+
+async function sendWrite(
+  client: any,
+  request: {
+    address: `0x${string}`;
+    functionName: string;
+    args: unknown[];
+  }
+) {
+  const preset = await estimateWriteFeePreset(client, request, "standard");
+  const fees = feePresetToTransactionFees(preset);
+
+  const hash = await client.writeContract({
+    ...request,
+    value: 0n,
+    ...(fees ? { fees } : {}),
+  });
+
+  await client.waitForTransactionReceipt({
+    hash,
+    status: "ACCEPTED" as any,
+    retries: 24,
+    interval: 5000,
+  });
+
+  return hash;
 }
 
 export default function Home() {
@@ -38,25 +83,22 @@ export default function Home() {
 
   async function submitReview(event: FormEvent) {
     event.preventDefault();
-    if (!contractAddress) return setStatus("Set NEXT_PUBLIC_CONTRACT_ADDRESS first.");
+
+    if (!contractAddress) {
+      return setStatus("Set NEXT_PUBLIC_CONTRACT_ADDRESS first.");
+    }
+
     try {
       setStatus("Submitting review request...");
       const account = await walletAddress();
       const client: any = makeClient(account);
-      const write = {
+
+      const hash = await sendWrite(client, {
         address: contractAddress,
         functionName: "submit_review",
         args: [reviewId, requirement, evidenceUrl],
-      };
-      const estimate = await client.estimateTransactionFeesForWrite(write);
-      const hash = await client.writeContract({
-        ...write,
-        fees: {
-          distribution: estimate.distribution,
-          feeValue: estimate.feeValue,
-        },
       });
-      await client.waitForTransactionReceipt({ hash, status: "ACCEPTED", retries: 24, interval: 5000 });
+
       setStatus(`Submitted: ${hash}`);
     } catch (error: any) {
       setStatus(error?.message || "Submit failed");
@@ -64,25 +106,21 @@ export default function Home() {
   }
 
   async function resolveReview() {
-    if (!contractAddress) return setStatus("Set NEXT_PUBLIC_CONTRACT_ADDRESS first.");
+    if (!contractAddress) {
+      return setStatus("Set NEXT_PUBLIC_CONTRACT_ADDRESS first.");
+    }
+
     try {
       setStatus("Resolving with GenLayer consensus...");
       const account = await walletAddress();
       const client: any = makeClient(account);
-      const write = {
+
+      const hash = await sendWrite(client, {
         address: contractAddress,
         functionName: "resolve_review",
         args: [lookupId],
-      };
-      const estimate = await client.estimateTransactionFeesForWrite(write);
-      const hash = await client.writeContract({
-        ...write,
-        fees: {
-          distribution: estimate.distribution,
-          feeValue: estimate.feeValue,
-        },
       });
-      await client.waitForTransactionReceipt({ hash, status: "ACCEPTED", retries: 24, interval: 5000 });
+
       setStatus(`Resolved: ${hash}`);
       await loadReview();
     } catch (error: any) {
@@ -91,15 +129,20 @@ export default function Home() {
   }
 
   async function loadReview() {
-    if (!contractAddress) return setStatus("Set NEXT_PUBLIC_CONTRACT_ADDRESS first.");
+    if (!contractAddress) {
+      return setStatus("Set NEXT_PUBLIC_CONTRACT_ADDRESS first.");
+    }
+
     try {
       setStatus("Reading review...");
       const client: any = makeClient();
+
       const data = await client.readContract({
         address: contractAddress,
         functionName: "get_review",
         args: [lookupId],
       });
+
       setResult(data);
       setStatus("Loaded");
     } catch (error: any) {
@@ -113,7 +156,10 @@ export default function Home() {
         <div>
           <span className="eyebrow">GENLAYER INTELLIGENT CONTRACT</span>
           <h1>ProofJudge</h1>
-          <p>Verify task evidence with live web data, LLM reasoning, and validator consensus.</p>
+          <p>
+            Verify task evidence with live web data, LLM reasoning, and validator
+            consensus.
+          </p>
         </div>
         <div className="status">{status}</div>
       </header>
@@ -121,27 +167,73 @@ export default function Home() {
       <section className="grid">
         <form className="card" onSubmit={submitReview}>
           <h2>Submit evidence</h2>
-          <label>Review ID<input value={reviewId} onChange={(e) => setReviewId(e.target.value)} /></label>
-          <label>Requirement<textarea value={requirement} onChange={(e) => setRequirement(e.target.value)} placeholder="Example: The GitHub repository must include a working demo and setup instructions." /></label>
-          <label>Public evidence URL<input value={evidenceUrl} onChange={(e) => setEvidenceUrl(e.target.value)} placeholder="https://..." /></label>
+
+          <label>
+            Review ID
+            <input
+              value={reviewId}
+              onChange={(e) => setReviewId(e.target.value)}
+            />
+          </label>
+
+          <label>
+            Requirement
+            <textarea
+              value={requirement}
+              onChange={(e) => setRequirement(e.target.value)}
+              placeholder="Example: The repository must include a working demo and setup instructions."
+            />
+          </label>
+
+          <label>
+            Public evidence URL
+            <input
+              value={evidenceUrl}
+              onChange={(e) => setEvidenceUrl(e.target.value)}
+              placeholder="https://..."
+            />
+          </label>
+
           <button type="submit">Submit on GenLayer</button>
         </form>
 
         <div className="card">
           <h2>Resolve & inspect</h2>
-          <label>Review ID<input value={lookupId} onChange={(e) => setLookupId(e.target.value)} /></label>
+
+          <label>
+            Review ID
+            <input
+              value={lookupId}
+              onChange={(e) => setLookupId(e.target.value)}
+            />
+          </label>
+
           <div className="actions">
             <button onClick={resolveReview}>Resolve with consensus</button>
-            <button className="secondary" onClick={loadReview}>Read result</button>
+            <button className="secondary" onClick={loadReview}>
+              Read result
+            </button>
           </div>
-          <pre>{result ? JSON.stringify(result, null, 2) : "No result loaded yet."}</pre>
+
+          <pre>
+            {result ? JSON.stringify(result, null, 2) : "No result loaded yet."}
+          </pre>
         </div>
       </section>
 
       <section className="steps">
-        <div><b>1</b><span>Submit a natural-language requirement and public evidence URL.</span></div>
-        <div><b>2</b><span>GenLayer fetches the evidence and evaluates it with an LLM.</span></div>
-        <div><b>3</b><span>Validators reach consensus and store the verdict on-chain.</span></div>
+        <div>
+          <b>1</b>
+          <span>Submit a natural-language requirement and public evidence URL.</span>
+        </div>
+        <div>
+          <b>2</b>
+          <span>GenLayer fetches the evidence and evaluates it independently.</span>
+        </div>
+        <div>
+          <b>3</b>
+          <span>Validators reach consensus and store the verdict on-chain.</span>
+        </div>
       </section>
     </main>
   );
