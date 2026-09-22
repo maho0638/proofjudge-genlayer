@@ -14,8 +14,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - run: genvm-lint check contracts/proof_judge.py
       - run: pytest tests/direct -v
+      - run: genvm-lint check contracts/proof_judge.py
 
   frontend:
     runs-on: ubuntu-latest
