@@ -16,9 +16,10 @@ declare global {
   }
 }
 
-const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as
-  | `0x${string}`
-  | undefined;
+const contractAddress = (
+  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
+  "0x52D23490C660d184b14087007E6B56126ed0B069"
+) as `0x${string}`;
 
 function makeClient(account?: string) {
   const config: any = {
