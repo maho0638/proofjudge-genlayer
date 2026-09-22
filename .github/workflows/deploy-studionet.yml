@@ -1,4 +1,4 @@
-name: Deploy Studionet
+name: Verify Studionet Deployment
 
 on:
   push:
@@ -16,5 +16,5 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - name: Deploy ProofJudge and run live GenLayer smoke test
+      - name: Verify live ProofJudge contract with GenLayer consensus
         run: gltest tests/integration/test_studionet_smoke.py -v -s --network studionet
