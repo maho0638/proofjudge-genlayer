@@ -1,0 +1,23 @@
+{
+  "network": "GenLayer Studionet",
+  "chainId": 61999,
+  "contract": "0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc",
+  "jobId": "example-domain-milestone-v2",
+  "workflow": "https://github.com/maho0638/proofjudge-genlayer/actions/runs/35925077495",
+  "expected": {
+    "status": "PAID",
+    "confidence": 97,
+    "reasonCode": "CROSS_CHECK",
+    "rewardClaimed": true,
+    "attemptCount": 1,
+    "evidenceUrl": "https://example.com",
+    "supportUrl": "https://www.iana.org/help/example-domains",
+    "rationale": "Approved because independent support corroborates the primary evidence. Confidence 97/100."
+  },
+  "transactions": {
+    "create": "0x0b42a662a7e9f6da6b09ff5fdb49f593781ba28f6bb508d3b70a18936a0838c6",
+    "submit": "0x021ec1dc5c5afa5181c236b59a56b424b1e53953dd5459bcb9492165872db77d",
+    "resolve": "0x2621e4f4a2ecedb901c5e1ad25c975d4762e999918e37c6f56c70a255e7fb7db",
+    "claim": "0x3d183cafb0ac32e5cd319f0059e53dce220982b0c4e8c43b5a58be044ce5e1dd"
+  }
+}
