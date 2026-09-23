@@ -1,81 +1,92 @@
-# ProofJudge — Builder Project Submission
+# ProofJudge — Project Explorer Submission Dossier
 
-## What it is
+## One-sentence summary
 
-ProofJudge is a GenLayer-native evidence verification application for bounties, freelance milestones, grants, and community tasks.
+ProofJudge is a GenLayer-native milestone escrow where sponsors lock GEN, contractors submit live public evidence, and validator consensus determines whether the contractor can claim payment.
 
-A user submits:
+## Problem
 
-- a natural-language requirement,
-- a public evidence URL,
-- a unique review ID.
+Freelance milestones, grant stages, service deliverables and performance contracts often depend on subjective acceptance criteria. A deterministic smart contract can escrow funds but cannot open a live website and decide whether a delivered result actually satisfies a natural-language brief.
 
-The Intelligent Contract fetches the evidence from the live web, evaluates it with an LLM, validates the subjective outcome through GenLayer validator consensus, and stores the final verdict on-chain.
+Centralized review solves the reasoning problem by reintroducing trust in one platform operator.
 
-## Why GenLayer is essential
+## GenLayer-native solution
 
-This workflow cannot be implemented as a normal deterministic smart contract: the contract must read arbitrary web evidence and reason about whether that evidence satisfies a human-language requirement.
+ProofJudge makes GenLayer the adjudication and settlement layer:
 
-ProofJudge uses:
+- the sponsor locks native GEN and precommits the requirement and rubric;
+- one assigned contractor submits a primary deliverable URL plus independent supporting evidence;
+- the Intelligent Contract fetches both live sources at resolution time;
+- a leader produces a structured approved/rejected verdict, confidence and reason code;
+- validators independently repeat the web retrieval and judgment;
+- the accepted result changes on-chain state;
+- only APPROVED work can unlock the contractor's escrowed GEN.
 
-- `gl.nondet.web.render` for live web evidence,
-- `gl.nondet.exec_prompt` for structured evaluation,
-- `gl.vm.run_nondet_unsafe` with an independent validator function,
-- GenLayer consensus for the final on-chain decision.
+Rejected work can be resubmitted before deadline, up to three attempts. Expired OPEN or REJECTED work has a guarded sponsor refund path, while unresolved SUBMITTED evidence cannot be bypassed.
 
-## Live deployment
+## Live Studionet evidence
 
 - Network: GenLayer Studionet
 - Chain ID: 61999
-- Contract: `0x52D23490C660d184b14087007E6B56126ed0B069`
-- Explorer: https://explorer-studio.genlayer.com/address/0x52D23490C660d184b14087007E6B56126ed0B069
+- Contract: `0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc`
+- Explorer: https://explorer-studio.genlayer.com/address/0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc
 - Live app: https://proofjudge-genlayer-frontend.vercel.app
+- Successful full lifecycle: https://github.com/maho0638/proofjudge-genlayer/actions/runs/35925077495
 
-## Verified end-to-end execution
+Verified job: `example-domain-milestone-v2`
 
-A real Studionet smoke test executed the complete path:
+Create escrow:
+https://explorer-studio.genlayer.com/tx/0x0b42a662a7e9f6da6b09ff5fdb49f593781ba28f6bb508d3b70a18936a0838c6
 
-1. submitted a requirement and public evidence URL,
-2. stored the pending review,
-3. fetched and evaluated the evidence,
-4. reached validator consensus,
-5. stored and read the final verdict.
+Submit evidence:
+https://explorer-studio.genlayer.com/tx/0x021ec1dc5c5afa5181c236b59a56b424b1e53953dd5459bcb9492165872db77d
 
-Submit transaction:
+Resolve by consensus:
+https://explorer-studio.genlayer.com/tx/0x2621e4f4a2ecedb901c5e1ad25c975d4762e999918e37c6f56c70a255e7fb7db
 
-`0xeddbd86a8b8fb29d95f213cb566d9649f988343ee613f6e0bb2953b1a14298d0`
+Claim payment:
+https://explorer-studio.genlayer.com/tx/0x3d183cafb0ac32e5cd319f0059e53dce220982b0c4e8c43b5a58be044ce5e1dd
 
-Resolve transaction:
+Verified settlement:
 
-`0xc93a299c8fab59fc6f67a11858343a698786a74a335109e7a2b38b2500ec547f`
+- `status = PAID`
+- `confidence = 97`
+- `reason_code = CROSS_CHECK`
+- `reward_claimed = true`
+- rationale: `Approved because independent support corroborates the primary evidence. Confidence 97/100.`
 
-Verified result:
+## Product completeness
 
-- status: `approved`
-- confidence: `99/100`
-- validator outcome: majority agree
-- CI live Studionet smoke workflow: passing
+The production UI supports:
 
-## Repository quality
+- wallet connection;
+- sponsor creation with native GEN escrow;
+- contractor assignment;
+- natural-language acceptance requirement and rubric;
+- two-source evidence submission with client-side HTTPS/domain checks;
+- live on-chain job discovery;
+- read-only reviewer benchmark requiring no wallet;
+- consensus resolution;
+- contractor payment claim;
+- expired-work refund;
+- retry visibility and attempt count;
+- direct Explorer links for the canonical lifecycle;
+- a reviewer integrity gate comparing live contract state against the pinned benchmark.
 
-The repository includes:
+## Differentiation
 
-- Intelligent Contract source
-- direct deterministic tests
-- live Studionet integration test
-- GenVM linting
-- GitHub Actions CI
-- Next.js + GenLayerJS frontend
-- fee estimation flow
-- deployment script
-- live Vercel application
-- public deployment and transaction evidence
+ProofJudge is not ResearchArena.
 
-## Future milestones
+ResearchArena is a multi-participant competitive research marketplace that selects one winning research submission. ProofJudge is a bilateral 1:1 performance contract: one sponsor, one assigned contractor, explicit acceptance criteria, retryable evidence and escrow release only after consensus approval.
 
-- multiple evidence URLs per review
-- challenge and appeal rounds
-- escrow / payout integration
-- reviewer and submitter reputation
-- evidence snapshots and content hashes
-- domain-specific verdict schemas
+## Reviewer verification
+
+Start with:
+
+- `docs/STEWARD_VERIFICATION.md`
+- `docs/QUALITY_BAR.md`
+- `docs/SECURITY.md`
+- `docs/PRODUCT_READINESS.md`
+- `frontend/public/verified-demo.json`
+
+The repository also includes 9 direct contract tests, GenVM linting, production frontend build checks and a live Studionet integration workflow.
