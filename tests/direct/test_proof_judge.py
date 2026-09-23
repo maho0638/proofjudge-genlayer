@@ -1,3 +1,4 @@
+from genlayer import Address
 import json
 
 
@@ -6,7 +7,7 @@ def create_demo_job(direct_vm, contract, sponsor, contractor):
     direct_vm.value = 2500
     contract.create_job(
         "milestone-1",
-        contractor,
+        Address("0x" + contractor.hex()),
         "The delivered page must clearly identify itself as Example Domain.",
         "Approve only if the primary deliverable directly satisfies the requirement and independent support corroborates it.",
         4000000000,
@@ -66,7 +67,7 @@ def test_zero_reward_is_rejected(direct_vm, direct_deploy, direct_alice, direct_
     with direct_vm.expect_revert("greater than zero"):
         contract.create_job(
             "no-reward",
-            direct_bob,
+            Address("0x" + direct_bob.hex()),
             "Requirement",
             "Rubric",
             4000000000,
@@ -81,7 +82,7 @@ def test_sponsor_cannot_assign_self(direct_vm, direct_deploy, direct_alice):
     with direct_vm.expect_revert("must be different"):
         contract.create_job(
             "self-job",
-            direct_alice,
+            Address("0x" + direct_alice.hex()),
             "Requirement",
             "Rubric",
             4000000000,
