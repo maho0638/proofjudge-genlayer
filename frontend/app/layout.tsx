@@ -1,8 +1,9 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "ProofJudge — GenLayer Evidence Verification",
-  description: "Consensus-backed review of public task evidence.",
+  title: "ProofJudge — Consensus Milestone Escrow",
+  description:
+    "GenLayer-native milestone escrow where live evidence and validator consensus determine whether a contractor can claim locked GEN.",
 };
 
 export default function RootLayout({
