@@ -166,17 +166,18 @@ Return JSON only with every field present:
     def create_job(
         self,
         job_id: str,
-        contractor: Address,
+        contractor: str,
         requirement: str,
         rubric: str,
         deadline: u256,
     ) -> None:
         job_id = job_id.strip()
+        contractor = contractor.strip()
         requirement = requirement.strip()
         rubric = rubric.strip()
 
-        if not job_id or not requirement or not rubric:
-            raise gl.vm.UserError("Missing job ID, requirement, or rubric")
+        if not job_id or not contractor or not requirement or not rubric:
+            raise gl.vm.UserError("Missing job ID, contractor, requirement, or rubric")
         if len(job_id) > 96:
             raise gl.vm.UserError("Job ID too long")
         if len(requirement) > 2000:
@@ -187,7 +188,8 @@ Return JSON only with every field present:
             raise gl.vm.UserError("Job already exists")
         if gl.message.value == u256(0):
             raise gl.vm.UserError("Escrow reward must be greater than zero")
-        if contractor == gl.message.sender_address:
+        contractor_address = Address(contractor)
+        if contractor_address == gl.message.sender_address:
             raise gl.vm.UserError("Sponsor and contractor must be different")
         if int(deadline) <= self._now():
             raise gl.vm.UserError("Deadline must be in the future")
@@ -199,7 +201,7 @@ Return JSON only with every field present:
         self.jobs[job_id] = Job(
             id=job_id,
             sponsor=gl.message.sender_address,
-            contractor=contractor,
+            contractor=contractor_address,
             requirement=requirement,
             rubric=rubric,
             reward=gl.message.value,
