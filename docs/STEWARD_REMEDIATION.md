@@ -1,6 +1,6 @@
 # ProofJudge — Steward Remediation Map (V4)
 
-This document maps every requested review item to a concrete implementation and reviewer-verifiable proof. The final canonical Studionet address and transaction hashes are also mirrored in `frontend/public/verified-demo.json` and `docs/STEWARD_VERIFICATION.md`.
+This document maps every requested review item to a concrete implementation and reviewer-verifiable proof. The canonical successful Studionet contract is `0x76D61aAec5bD4625346858acCd6dAb39966c4247` and the canonical verification workflow is https://github.com/maho0638/proofjudge-genlayer/actions/runs/35993240108. The same values and transaction hashes are mirrored in `frontend/public/verified-demo.json` and `docs/STEWARD_VERIFICATION.md`.
 
 ## 1. One canonical deployed contract
 
@@ -13,7 +13,7 @@ All reviewer-facing surfaces are required by tests to use one canonical contract
 - steward guide
 - quality mapping
 
-`tests/direct/test_repo_consistency.py` also rejects the two stale addresses cited in the steward request.
+`tests/direct/test_repo_consistency.py` rejects the two addresses cited in the original steward request plus superseded interim deployments, and enforces one canonical contract/workflow across reviewer-facing surfaces.
 
 ## 2. Exact deployment-source provenance
 
@@ -25,7 +25,7 @@ Before deployment it verifies the factory's `contract_code` is exactly the repos
 
 This matches the public `genlayer-test` implementation: `ContractFactory.from_file_path` loads that file into `contract_code`, and `deploy_contract_tx` passes `self.contract_code` directly to the GenLayer client deployment call.
 
-The reviewer UI verifies its mirrored source file against the same workflow-pinned SHA-256. CI also enforces that the mirrored source is byte-equivalent to `contracts/proof_judge.py`.
+The live workflow additionally reads the deployed source back from Studionet with `getContractCode` and compares it against `contracts/proof_judge.py`. The canonical run reports deployed and repository normalized SHA-256 `0cba1187b5478d885f8c150e1597298d4bc550b7552a01862c43eaeaa4f79ca9` and `DEPLOYED_SOURCE_MATCH=true`. The reviewer UI verifies its mirrored source against that same digest, while CI enforces the source mirror against the repository file.
 
 ## 3. Live RPC only — no cached verdict presented as live proof
 
@@ -143,5 +143,5 @@ The direct/repository test suite covers, among other cases:
 1. Open the production app and inspect **Reviewer Fast Track** / **Verified Live Proof**.
 2. Confirm the live integrity gate reports the configured contract and deployed-source match.
 3. Open the canonical Explorer contract and finalized lifecycle transactions.
-4. Open the successful **Deploy & Verify Studionet** workflow and confirm `PROOFJUDGE_DEPLOY_INPUT_MATCH=true` plus the deployment-source SHA-256 beside the canonical deployed address.
+4. Open the successful **Deploy & Verify Studionet** workflow (run 35993240108) and confirm `PROOFJUDGE_DEPLOY_INPUT_MATCH=true`, canonical address `0x76D61aAec5bD4625346858acCd6dAb39966c4247`, matching deployed/repository SHA-256, and `DEPLOYED_SOURCE_MATCH=true`.
 5. Review `contracts/proof_judge.py`, `tests/direct/test_proof_judge.py`, and this remediation map.
