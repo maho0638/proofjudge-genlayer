@@ -1,9 +1,17 @@
 import json
 import time
 
+import pytest
+
 
 REQUIREMENT = "The delivered page must clearly identify itself as Example Domain."
 RUBRIC = "Approve only if the primary deliverable directly satisfies the requirement and independent support corroborates it."
+
+
+@pytest.fixture(autouse=True)
+def strict_direct_vm(direct_vm):
+    direct_vm.strict_mocks = True
+    direct_vm.check_pickling = True
 
 
 def future_deadline(seconds=3600):
