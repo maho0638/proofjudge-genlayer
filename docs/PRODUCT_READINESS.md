@@ -1,61 +1,72 @@
 # ProofJudge — Product Readiness
 
-ProofJudge is designed as a complete bilateral milestone-settlement application rather than an AI verdict demo.
+ProofJudge is a complete bilateral milestone-settlement prototype rather than a verdict widget.
 
-## Product contract
+## End-to-end product contract
 
-1. Sponsor assigns one contractor and commits requirement, rubric and deadline.
-2. Sponsor locks native GEN in the Intelligent Contract.
-3. Contractor submits a primary public deliverable and independent supporting evidence.
-4. GenLayer fetches both sources live.
-5. The leader returns a bounded structured verdict.
-6. Validators independently repeat the evidence review.
-7. Consensus updates job state to APPROVED or REJECTED.
-8. Rejected evidence can be replaced before deadline, up to three attempts.
-9. APPROVED work becomes claimable only by the assigned contractor.
-10. Expired OPEN/REJECTED work can be refunded only to the sponsor.
-11. SUBMITTED evidence must be resolved before funds can move.
+1. Sponsor assigns a contractor.
+2. Sponsor commits requirement, rubric and deadline.
+3. Sponsor escrows native GEN.
+4. Contractor submits primary + independent public evidence.
+5. GenLayer fetches both sources live.
+6. Leader proposes a bounded structured verdict.
+7. Validators independently re-fetch and re-evaluate.
+8. Consensus stores APPROVED or REJECTED.
+9. Approval requires at least 70/100 confidence.
+10. Rejected evidence may retry, capped at three attempts.
+11. Approved contractor may claim.
+12. Expired OPEN/REJECTED escrow may return to sponsor.
+13. Lifecycle timestamps remain auditable on-chain.
 
-## Product completeness checklist
+## Completeness checklist
 
-- [x] Native GEN escrow
-- [x] Assigned contractor
-- [x] Natural-language requirement
-- [x] Precommitted judging rubric
-- [x] Deadline
-- [x] Two independent HTTPS evidence hosts
-- [x] Live web retrieval inside the Intelligent Contract
-- [x] Structured approved/rejected verdict
-- [x] Confidence score
-- [x] Structured reason metadata
-- [x] Independent validator re-execution
-- [x] Deterministic stored rationale
-- [x] Contractor-only claim
-- [x] Guarded sponsor refund
-- [x] Retry path capped at three attempts
-- [x] On-chain agreement index
-- [x] Full sponsor / contractor / settlement frontend
-- [x] Client-side preflight validation
-- [x] Read-only reviewer benchmark requiring no wallet
-- [x] Honest RPC failure fallback
-- [x] Reviewer integrity gate
-- [x] Direct Explorer lifecycle proof
-- [x] 9 direct contract tests
-- [x] GenVM lint
+- [x] native GEN escrow
+- [x] sponsor and assigned contractor roles
+- [x] natural-language requirement
+- [x] precommitted rubric
+- [x] deadline and 365-day cap
+- [x] zero-address protection
+- [x] two HTTPS evidence sources
+- [x] live public web retrieval inside contract
+- [x] prompt-injection instruction boundary
+- [x] structured verdict
+- [x] 70/100 minimum approval confidence
+- [x] fail-closed source outage behavior
+- [x] independent validator re-execution
+- [x] deterministic stored rationale
+- [x] contractor-only claim
+- [x] guarded sponsor refund
+- [x] retry cap
+- [x] on-chain agreement index
+- [x] lifecycle audit timestamps
+- [x] policy version
+- [x] role-aware frontend actions
+- [x] finalized transaction activity
+- [x] walletless reviewer proof
+- [x] live dual-outcome integrity gate
+- [x] 16 direct tests
+- [x] validator dissent test
+- [x] strict mocks
+- [x] storage pickling checks
+- [x] GenVM lint/validation
 - [x] Next.js production build
-- [x] Fresh live Studionet integration lifecycle
+- [x] fresh Studionet PAID lifecycle
+- [x] fresh Studionet REJECTED → REFUNDED lifecycle
 
-## Verified live lifecycle
+## Canonical live proof
 
-Contract: `0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc`
+Contract:
+`0x699f62FA0f53B92D85949B1F046f6B50209707eE`
 
 Workflow:
-https://github.com/maho0638/proofjudge-genlayer/actions/runs/35925077495
+https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296
 
-Canonical job: `example-domain-milestone-v2`
+Paid production milestone:
+`PAID · 98/100 · CROSS_CHECK`
 
-Result: `PAID · 97/100 · CROSS_CHECK · reward_claimed=true`
+Bad-evidence path:
+`REJECTED · 2/100 · EVIDENCE_GAP → REFUNDED`
 
 ## Product boundary
 
-ProofJudge is intentionally bilateral. It does not select a winner among competing researchers; that is the distinct ResearchArena product. ProofJudge's purpose is acceptance and economic settlement of one assigned contractor's milestone.
+ProofJudge is bilateral settlement for one assigned contractor. It intentionally does not perform multi-entrant winner selection.
