@@ -37,6 +37,7 @@ WORKFLOW_REFERENCE_FILES = [
     ROOT / "docs" / "STEWARD_VERIFICATION.md",
     ROOT / "docs" / "QUALITY_BAR.md",
     ROOT / "docs" / "SECURITY.md",
+    ROOT / "docs" / "PRODUCT_READINESS.md",
     ROOT / "docs" / "STEWARD_REMEDIATION.md",
     ROOT / "docs" / "ARCHITECTURE.md",
     ROOT / ".github" / "workflows" / "production-smoke.yml",
