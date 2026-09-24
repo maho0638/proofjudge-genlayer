@@ -2,91 +2,92 @@
 
 ## One-sentence summary
 
-ProofJudge is a GenLayer-native milestone escrow where sponsors lock GEN, contractors submit live public evidence, and validator consensus determines whether the contractor can claim payment.
+ProofJudge is a GenLayer-native milestone escrow where a sponsor locks GEN, an assigned contractor submits live public evidence, and validator consensus determines whether payment is released or the sponsor later recovers the escrow.
 
 ## Problem
 
-Freelance milestones, grant stages, service deliverables and performance contracts often depend on subjective acceptance criteria. A deterministic smart contract can escrow funds but cannot open a live website and decide whether a delivered result actually satisfies a natural-language brief.
+Freelance milestones, grants, service deliverables and performance contracts often depend on subjective acceptance criteria. Deterministic smart contracts can escrow value, but they cannot open arbitrary live webpages and judge whether a delivered result satisfies a natural-language brief.
 
-Centralized review solves the reasoning problem by reintroducing trust in one platform operator.
+Centralized marketplaces solve that by appointing a trusted reviewer. ProofJudge replaces that single reviewer with GenLayer consensus.
 
 ## GenLayer-native solution
 
-ProofJudge makes GenLayer the adjudication and settlement layer:
+The sponsor commits:
 
-- the sponsor locks native GEN and precommits the requirement and rubric;
-- one assigned contractor submits a primary deliverable URL plus independent supporting evidence;
-- the Intelligent Contract fetches both live sources at resolution time;
-- a leader produces a structured approved/rejected verdict, confidence and reason code;
-- validators independently repeat the web retrieval and judgment;
-- the accepted result changes on-chain state;
-- only APPROVED work can unlock the contractor's escrowed GEN.
+- one assigned contractor;
+- a natural-language requirement;
+- a judging rubric;
+- a deadline;
+- native GEN escrow.
 
-Rejected work can be resubmitted before deadline, up to three attempts. Expired OPEN or REJECTED work has a guarded sponsor refund path, while unresolved SUBMITTED evidence cannot be bypassed.
+The contractor submits a public deliverable URL and an independent support URL. The Intelligent Contract fetches both live. A leader proposes a structured decision; validators independently re-fetch and re-evaluate the evidence. The accepted result changes contract state and therefore who can withdraw the escrow.
 
-## Live Studionet evidence
+V3 adds an explicit **70/100 minimum approval threshold**, safe failure on unavailable evidence, lifecycle timestamps, retry limits and a policy version stored with every agreement.
 
-- Network: GenLayer Studionet
-- Chain ID: 61999
-- Contract: `0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc`
-- Explorer: https://explorer-studio.genlayer.com/address/0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc
+## Verified live Studionet deployment
+
+- Contract: `0x699f62FA0f53B92D85949B1F046f6B50209707eE`
+- Explorer: https://explorer-studio.genlayer.com/address/0x699f62FA0f53B92D85949B1F046f6B50209707eE
 - Live app: https://proofjudge-genlayer-frontend.vercel.app
-- Successful full lifecycle: https://github.com/maho0638/proofjudge-genlayer/actions/runs/35925077495
+- Full verification workflow: https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296
 
-Verified job: `example-domain-milestone-v2`
+### Live outcome 1: production ProofJudge release
 
-Create escrow:
-https://explorer-studio.genlayer.com/tx/0x0b42a662a7e9f6da6b09ff5fdb49f593781ba28f6bb508d3b70a18936a0838c6
+`proofjudge-production-milestone-v3`
 
-Submit evidence:
-https://explorer-studio.genlayer.com/tx/0x021ec1dc5c5afa5181c236b59a56b424b1e53953dd5459bcb9492165872db77d
+Real production page + independent repository evidence was judged:
 
-Resolve by consensus:
-https://explorer-studio.genlayer.com/tx/0x2621e4f4a2ecedb901c5e1ad25c975d4762e999918e37c6f56c70a255e7fb7db
+`APPROVED · 98/100 · CROSS_CHECK → PAID`
 
-Claim payment:
-https://explorer-studio.genlayer.com/tx/0x3d183cafb0ac32e5cd319f0059e53dce220982b0c4e8c43b5a58be044ce5e1dd
+The contractor then claimed the escrow.
 
-Verified settlement:
+### Live outcome 2: intentionally irrelevant evidence
 
-- `status = PAID`
-- `confidence = 97`
-- `reason_code = CROSS_CHECK`
-- `reward_claimed = true`
-- rationale: `Approved because independent support corroborates the primary evidence. Confidence 97/100.`
+`irrelevant-evidence-refund-v1`
+
+Unrelated evidence was judged:
+
+`REJECTED · 2/100 · EVIDENCE_GAP`
+
+Contractor payout never opened. After the deadline the sponsor executed the guarded refund:
+
+`REFUNDED`
 
 ## Product completeness
 
-The production UI supports:
+The production UI supports the full lifecycle:
 
 - wallet connection;
-- sponsor creation with native GEN escrow;
-- contractor assignment;
-- natural-language acceptance requirement and rubric;
-- two-source evidence submission with client-side HTTPS/domain checks;
-- live on-chain job discovery;
-- read-only reviewer benchmark requiring no wallet;
+- on-chain agreement discovery;
+- GEN escrow creation;
+- assigned contractor;
+- natural-language requirement and rubric;
+- deadline;
+- two independent HTTPS evidence hosts;
+- live contract state;
+- role-aware actions;
 - consensus resolution;
-- contractor payment claim;
-- expired-work refund;
-- retry visibility and attempt count;
-- direct Explorer links for the canonical lifecycle;
-- a reviewer integrity gate comparing live contract state against the pinned benchmark.
+- contractor claim;
+- rejected-evidence retry;
+- sponsor refund;
+- audit timestamps and policy version;
+- finalized transaction activity;
+- walletless live reviewer proof;
+- 12-check integrity gate over both economic outcomes.
+
+## Verification and engineering quality
+
+The repository includes:
+
+- 16 direct contract tests;
+- strict mocks and stored-state pickling checks;
+- explicit validator-disagreement testing;
+- GenVM lint/validation;
+- Next.js production build;
+- live Studionet integration that deploys a fresh contract and proves both PAID and REFUNDED paths.
 
 ## Differentiation
 
-ProofJudge is not ResearchArena.
+ProofJudge is a bilateral 1:1 performance agreement. It does not choose among competing researchers. Its core problem is acceptance of one assigned contractor's milestone and economic settlement based on consensus over live evidence.
 
-ResearchArena is a multi-participant competitive research marketplace that selects one winning research submission. ProofJudge is a bilateral 1:1 performance contract: one sponsor, one assigned contractor, explicit acceptance criteria, retryable evidence and escrow release only after consensus approval.
-
-## Reviewer verification
-
-Start with:
-
-- `docs/STEWARD_VERIFICATION.md`
-- `docs/QUALITY_BAR.md`
-- `docs/SECURITY.md`
-- `docs/PRODUCT_READINESS.md`
-- `frontend/public/verified-demo.json`
-
-The repository also includes 9 direct contract tests, GenVM linting, production frontend build checks and a live Studionet integration workflow.
+Reviewer start point: `docs/STEWARD_VERIFICATION.md`.
