@@ -1,0 +1,75 @@
+name: Production Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Wait for canonical Vercel release
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://proofjudge-genlayer-frontend.vercel.app/"
+          EXPECT="Correct work gets paid."
+
+          for attempt in $(seq 1 30); do
+            if curl -fsSL --retry 2 --connect-timeout 10 "$URL" -o /tmp/proofjudge.html               && grep -Fq "$EXPECT" /tmp/proofjudge.html; then
+              echo "Production release marker found on attempt $attempt"
+              exit 0
+            fi
+            echo "Production not ready yet ($attempt/30)"
+            sleep 10
+          done
+
+          echo "Expected production release marker was not served"
+          exit 1
+
+      - name: Verify machine-readable live proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3             "https://proofjudge-genlayer-frontend.vercel.app/verified-demo.json"             -o /tmp/verified-demo.json
+
+          python - <<'PY'
+          import json
+
+          with open("/tmp/verified-demo.json", "r", encoding="utf-8") as handle:
+              proof = json.load(handle)
+
+          assert proof["network"] == "GenLayer Studionet"
+          assert proof["chainId"] == 61999
+          assert proof["contract"].lower() == "0x699f62fa0f53b92d85949b1f046f6b50209707ee"
+
+          paid = proof["paidOutcome"]
+          assert paid["jobId"] == "proofjudge-production-milestone-v3"
+          assert paid["expected"]["status"] == "PAID"
+          assert paid["expected"]["confidence"] == 98
+          assert paid["expected"]["reasonCode"] == "CROSS_CHECK"
+          assert paid["expected"]["rewardClaimed"] is True
+          assert paid["expected"]["policyVersion"] == "PJ_V3_MINCONF70"
+
+          refunded = proof["refundedOutcome"]
+          assert refunded["jobId"] == "irrelevant-evidence-refund-v1"
+          assert refunded["expected"]["status"] == "REFUNDED"
+          assert refunded["expected"]["rejectionConfidence"] == 2
+          assert refunded["expected"]["reasonCode"] == "EVIDENCE_GAP"
+          assert refunded["expected"]["rewardSettled"] is True
+
+          print("Canonical production proof manifest verified.")
+          PY
+
+      - name: Verify branded logo asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3             "https://proofjudge-genlayer-frontend.vercel.app/proofjudge-logo.png"             -o /tmp/proofjudge-logo.png
+
+          MAGIC="$(xxd -p -l 8 /tmp/proofjudge-logo.png)"
+          test "$MAGIC" = "89504e470d0a1a0a"
+          test "$(stat -c%s /tmp/proofjudge-logo.png)" -gt 1000
+          echo "ProofJudge PNG logo verified."
