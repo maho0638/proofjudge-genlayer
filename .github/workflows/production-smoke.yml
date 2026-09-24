@@ -47,7 +47,7 @@ jobs:
           assert proof["network"] == "GenLayer Studionet"
           assert proof["chainId"] == 61999
           assert proof["contract"].lower() == "0x76d61aaec5bd4625346858accd6dab39966c4247"
-          assert proof["workflow"].endswith("/35993240108")
+          assert proof["workflow"] == "https://github.com/maho0638/proofjudge-genlayer/actions/runs/35993240108"
 
           source = proof["source"]
           assert source["deployedSourceMatch"] is True
