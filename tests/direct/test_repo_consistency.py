@@ -27,6 +27,8 @@ ADDRESS_REFERENCE_FILES = [
     ROOT / "docs" / "SECURITY.md",
     ROOT / "docs" / "PRODUCT_READINESS.md",
     ROOT / "docs" / "STEWARD_REMEDIATION.md",
+    ROOT / "docs" / "ARCHITECTURE.md",
+    ROOT / ".github" / "workflows" / "production-smoke.yml",
 ]
 
 WORKFLOW_REFERENCE_FILES = [
@@ -36,6 +38,8 @@ WORKFLOW_REFERENCE_FILES = [
     ROOT / "docs" / "QUALITY_BAR.md",
     ROOT / "docs" / "SECURITY.md",
     ROOT / "docs" / "STEWARD_REMEDIATION.md",
+    ROOT / "docs" / "ARCHITECTURE.md",
+    ROOT / ".github" / "workflows" / "production-smoke.yml",
 ]
 
 
