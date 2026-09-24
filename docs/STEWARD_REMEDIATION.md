@@ -19,7 +19,7 @@ All reviewer-facing surfaces are required by tests to use one canonical contract
 
 The live integration constructs its factory with the explicit path:
 
-`get_contract_factory(contract_file_path="contracts/proof_judge.py")`
+`get_contract_factory(contract_file_path="proof_judge.py")` (resolved by gltest against the configured `contracts/` directory)
 
 Before deployment it verifies the factory's `contract_code` is exactly the repository file (newline normalization only), prints `PROOFJUDGE_DEPLOY_INPUT_MATCH=true`, and records the SHA-256 digest of that exact source. The same factory instance is then deployed in that workflow, and the resulting contract address is printed beside the digest and lifecycle transaction hashes.
 

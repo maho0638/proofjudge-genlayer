@@ -19,7 +19,7 @@ def _field(value, name):
 def test_proofjudge_live_economic_outcomes(default_account, accounts):
     assert len(accounts) >= 2
 
-    factory = get_contract_factory(contract_file_path="contracts/proof_judge.py")
+    factory = get_contract_factory(contract_file_path="proof_judge.py")
     local_source = Path("contracts/proof_judge.py").read_text()
     assert factory.contract_code.replace("\r\n", "\n").strip() == local_source.replace("\r\n", "\n").strip()
     source_sha256 = hashlib.sha256(local_source.encode("utf-8")).hexdigest()
