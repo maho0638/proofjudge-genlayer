@@ -2,49 +2,79 @@
 
 ## Funds safety
 
-- A positive native GEN escrow is required when an agreement is created.
-- Sponsor and contractor must be different wallets.
-- Only the assigned contractor can claim an APPROVED agreement.
-- Claim state is set before the external value transfer.
-- Payment is single-use.
-- Refund is sponsor-only and deadline-gated.
-- SUBMITTED evidence cannot be bypassed by refund; it must first be resolved.
-- Contract balance is checked before payout or refund.
+- positive native GEN escrow is required;
+- sponsor and contractor must be different;
+- zero-address contractor is rejected;
+- only assigned contractor can submit or claim;
+- only sponsor can refund;
+- claim requires APPROVED state **and confidence ≥70**;
+- state is marked settled before external transfer;
+- payout/refund is single-use;
+- SUBMITTED evidence cannot be bypassed by refund;
+- contract balance is checked before transfers;
+- deadlines are capped at 365 days.
 
-## Evidence integrity
+## Consensus safety
 
-- Both evidence URLs must use HTTPS.
-- Primary and supporting URLs must be different.
-- Their normalized hostnames must be different.
-- Evidence is fetched at resolution time rather than accepted as client-supplied page text.
-- The requirement and rubric are committed before evidence submission.
+The leader returns only:
 
-Distinct hostnames are an anti-duplication boundary, not a claim that two websites are always organizationally independent. Source authority and corroboration are part of the live judgment.
+- `approved`
+- `confidence` from 0–100
+- one structured reason code.
+
+Validators independently repeat live retrieval and judgment.
+
+Acceptance requires:
+
+- exact agreement on approved/rejected;
+- confidence values within a 15-point tolerance;
+- semantically valid positive/failure reason families;
+- both leader and validator confidence ≥70 for an approval.
+
+A low-confidence “yes” is normalized to `REJECTED / EVIDENCE_GAP`.
+
+## Source failure safety
+
+If web rendering raises an exception, the verdict is:
+
+`approved=false · confidence=100 · SOURCE_UNAVAILABLE`
+
+A source outage therefore fails closed instead of unlocking funds.
 
 ## Prompt-injection resistance
 
-Web content is explicitly marked as untrusted evidence. The model is instructed not to follow instructions inside fetched pages and not to use outside knowledge. Output is restricted to:
+Fetched pages are explicitly labeled untrusted evidence. The prompt instructs the model not to follow instructions contained in those pages and not to use outside knowledge. Free-form generated prose never controls payment.
 
-- `approved`: boolean
-- `confidence`: integer 0–100
-- `reason_code`: one allowed category
+## Evidence rules
 
-Unconstrained model prose does not control payout.
+- HTTPS only;
+- URL length cap;
+- primary and support URLs must differ;
+- normalized hostnames must differ.
 
-## Consensus integrity
-
-The validator independently repeats the same evidence retrieval and evaluation. Acceptance requires:
-
-- exact agreement on approved/rejected;
-- bounded confidence difference of at most 15;
-- both reason codes to be valid schema values.
-
-Reason-code equality is intentionally not required because the label is explanatory metadata; payout safety is tied to the exact approved/rejected decision.
+Distinct hostnames are an anti-duplication boundary, not a guarantee of organizational independence. The rubric and consensus judgment must still assess authority and corroboration.
 
 ## Retry policy
 
-A rejected contractor may replace evidence before the deadline. Attempts are capped at three. This supports legitimate iteration while preventing unlimited consensus retries.
+A rejected contractor may replace evidence before the deadline. Attempts are capped at three to prevent unlimited consensus shopping.
 
-## Known trade-offs
+## Audit trail
 
-Public webpages can change, disappear or become inaccessible. ProofJudge therefore records stable URLs and the on-chain result, but it does not claim to permanently snapshot web content. It is a Studionet prototype and not legal arbitration or a production financial service.
+Each agreement stores:
+
+- `created_at`
+- `submitted_at`
+- `resolved_at`
+- `settled_at`
+- `policy_version`
+
+Current policy: `PJ_V3_MINCONF70`.
+
+## Verified adverse path
+
+The live Studionet workflow intentionally submitted irrelevant evidence. Consensus rejected it at 2/100 with `EVIDENCE_GAP`; contractor payout did not open; after deadline the sponsor recovered escrow.
+
+Workflow:
+https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296
+
+ProofJudge remains a Studionet prototype, not legal arbitration or a production financial service.
