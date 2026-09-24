@@ -324,7 +324,7 @@ export default function Home() {
     <main>
       <nav className="nav">
         <a className="brand" href="#top">
-          <img className="brandLogo" src="/proofjudge-logo.webp" alt="ProofJudge logo" />
+          <img className="brandLogo" src="/proofjudge-logo.png" alt="ProofJudge logo" />
           <span><b>ProofJudge</b><small>CONSENSUS MILESTONE ESCROW</small></span>
         </a>
         <div className="navLinks">
@@ -359,7 +359,7 @@ export default function Home() {
 
         <aside className="protocolCard">
           <div className="protocolHead">
-            <div><img className="protocolLogo" src="/proofjudge-logo.webp" alt="" aria-hidden="true" /><div><small>PROOFJUDGE PROTOCOL</small><b>Evidence-backed payout</b></div></div>
+            <div><img className="protocolLogo" src="/proofjudge-logo.png" alt="" aria-hidden="true" /><div><small>PROOFJUDGE PROTOCOL</small><b>Evidence-backed payout</b></div></div>
             <span className="chainBadge">61999</span>
           </div>
           <div className="protocolLive"><i /> STUDIONET OPERATIONAL <b>GEN</b></div>
@@ -563,7 +563,7 @@ export default function Home() {
       </section>
 
       <footer className="footer">
-        <div className="brand"><img className="brandLogo" src="/proofjudge-logo.webp" alt="ProofJudge logo" /><span><b>ProofJudge</b><small>EVIDENCE-BASED MILESTONE SETTLEMENT</small></span></div>
+        <div className="brand"><img className="brandLogo" src="/proofjudge-logo.png" alt="ProofJudge logo" /><span><b>ProofJudge</b><small>EVIDENCE-BASED MILESTONE SETTLEMENT</small></span></div>
         <div><a href="https://github.com/maho0638/proofjudge-genlayer" target="_blank">GitHub ↗</a><a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank">GenLayer Explorer ↗</a></div>
       </footer>
     </main>
