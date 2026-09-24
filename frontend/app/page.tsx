@@ -41,27 +41,50 @@ type ActivityItem = {
 
 const explorerBase = "https://explorer-studio.genlayer.com";
 const verifiedDemo = {
-  contract: "0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc",
-  jobId: "example-domain-milestone-v2",
-  workflow: "https://github.com/maho0638/proofjudge-genlayer/actions/runs/35925077495",
+  contract: "0x699f62FA0f53B92D85949B1F046f6B50209707eE",
+  jobId: "proofjudge-production-milestone-v3",
+  workflow: "https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296",
   expected: {
-    id: "example-domain-milestone-v2",
+    id: "proofjudge-production-milestone-v3",
     status: "PAID",
-    confidence: 97,
+    confidence: 98,
     reason_code: "CROSS_CHECK",
     reward_claimed: true,
     attempt_count: 1,
-    evidence_url: "https://example.com",
-    support_url: "https://www.iana.org/help/example-domains",
+    evidence_url: "https://proofjudge-genlayer-frontend.vercel.app",
+    support_url: "https://raw.githubusercontent.com/maho0638/proofjudge-genlayer/main/README.md",
     rationale:
-      "Approved because independent support corroborates the primary evidence. Confidence 97/100.",
+      "Approved because independent support corroborates the primary evidence. Confidence 98/100.",
+    policy_version: "PJ_V3_MINCONF70",
   } satisfies JobView,
   transactions: [
-    ["Create escrow", "0x0b42a662a7e9f6da6b09ff5fdb49f593781ba28f6bb508d3b70a18936a0838c6"],
-    ["Submit evidence", "0x021ec1dc5c5afa5181c236b59a56b424b1e53953dd5459bcb9492165872db77d"],
-    ["Resolve consensus", "0x2621e4f4a2ecedb901c5e1ad25c975d4762e999918e37c6f56c70a255e7fb7db"],
-    ["Claim payment", "0x3d183cafb0ac32e5cd319f0059e53dce220982b0c4e8c43b5a58be044ce5e1dd"],
+    ["Create escrow", "0xb9cdb9211b7775911b70e4af93b0408644c5d9ddafb0123d20fbcfc20dd62c9b"],
+    ["Submit evidence", "0x82e871f6510cf5e8af66e778a7b879e4a19d04f01c717103862d43bd5c19eb6d"],
+    ["Resolve consensus", "0x3fa02241eb60d23604ab3bde2d1eee9334794557f73af280f3ae3abdc2752bef"],
+    ["Claim payment", "0x8c98e573115a3a41a28456c59aa4eef1060ab1fdc713a69db74b50bd05d18013"],
   ] as const,
+  refund: {
+    jobId: "irrelevant-evidence-refund-v1",
+    expected: {
+      id: "irrelevant-evidence-refund-v1",
+      status: "REFUNDED",
+      confidence: 2,
+      reason_code: "EVIDENCE_GAP",
+      reward_claimed: true,
+      attempt_count: 1,
+      evidence_url: "https://example.com",
+      support_url: "https://www.iana.org/help/example-domains",
+      rationale:
+        "Rejected because the submitted evidence is insufficient or ambiguous. Confidence 2/100.",
+      policy_version: "PJ_V3_MINCONF70",
+    } satisfies JobView,
+    transactions: [
+      ["Create escrow", "0xd29492ee5f16e2d595b6792d17058c325ab0a9b4456cd7763eedfa2a01ebf637"],
+      ["Submit irrelevant evidence", "0xa790bb59991bd38e6e211cebcccba62fe2ea3870d1163cb1313d47dc7eeb18d0"],
+      ["Consensus rejects", "0xdab3ff727e806eda7b716290eececea0def16f2b5fd846cb1f29a89d21c86dfb"],
+      ["Sponsor refund", "0x794aabd5d29b0391503a969108342b96a350e654bcea8d9ad2831810d94f05dc"],
+    ] as const,
+  },
 };
 
 function short(value?: string) {
@@ -104,6 +127,7 @@ export default function Home() {
   const [workspace, setWorkspace] = useState<"sponsor" | "contractor" | "settlement">("sponsor");
 
   const [verifiedJob, setVerifiedJob] = useState<JobView | null>(null);
+  const [verifiedRefundJob, setVerifiedRefundJob] = useState<JobView | null>(null);
   const [verifiedProofState, setVerifiedProofState] = useState<"loading" | "live" | "error">("loading");
   const [jobs, setJobs] = useState<JobView[]>([]);
   const [marketState, setMarketState] = useState("Loading on-chain agreements…");
@@ -140,15 +164,23 @@ export default function Home() {
   async function loadVerified() {
     setVerifiedProofState("loading");
     try {
-      const data: any = await readClient().readContract({
+      const client: any = readClient();
+      const paid: any = await client.readContract({
         address: CONTRACT_ADDRESS,
         functionName: "get_job",
         args: [verifiedDemo.jobId],
       });
-      setVerifiedJob(data as JobView);
+      const refunded: any = await client.readContract({
+        address: CONTRACT_ADDRESS,
+        functionName: "get_job",
+        args: [verifiedDemo.refund.jobId],
+      });
+      setVerifiedJob(paid as JobView);
+      setVerifiedRefundJob(refunded as JobView);
       setVerifiedProofState("live");
     } catch {
       setVerifiedJob(null);
+      setVerifiedRefundJob(null);
       setVerifiedProofState("error");
     }
   }
@@ -325,20 +357,27 @@ export default function Home() {
 
   const canonicalJob =
     verifiedJob || (verifiedProofState === "error" ? verifiedDemo.expected : null);
+  const canonicalRefund =
+    verifiedRefundJob ||
+    (verifiedProofState === "error" ? verifiedDemo.refund.expected : null);
 
   const integrityChecks = useMemo(
     () =>
       [
         ["Contract", CONTRACT_ADDRESS.toLowerCase() === verifiedDemo.contract.toLowerCase()],
-        ["Job ID", canonicalJob?.id === verifiedDemo.expected.id],
-        ["Settlement status", canonicalJob?.status === verifiedDemo.expected.status],
-        ["Confidence", Number(canonicalJob?.confidence ?? -1) === verifiedDemo.expected.confidence],
-        ["Reason metadata", canonicalJob?.reason_code === verifiedDemo.expected.reason_code],
-        ["Reward claimed", canonicalJob?.reward_claimed === true],
-        ["Attempt count", Number(canonicalJob?.attempt_count ?? -1) === 1],
+        ["Paid job ID", canonicalJob?.id === verifiedDemo.expected.id],
+        ["Paid status", canonicalJob?.status === "PAID"],
+        ["Paid confidence", Number(canonicalJob?.confidence ?? -1) === 98],
+        ["Paid reason", canonicalJob?.reason_code === "CROSS_CHECK"],
+        ["Paid reward", canonicalJob?.reward_claimed === true],
+        ["Policy v3", canonicalJob?.policy_version === "PJ_V3_MINCONF70"],
         ["Independent evidence", host(String(canonicalJob?.evidence_url ?? "")) !== host(String(canonicalJob?.support_url ?? ""))],
+        ["Refund job ID", canonicalRefund?.id === verifiedDemo.refund.expected.id],
+        ["Rejected evidence", Number(canonicalRefund?.confidence ?? -1) === 2 && canonicalRefund?.reason_code === "EVIDENCE_GAP"],
+        ["Refunded status", canonicalRefund?.status === "REFUNDED"],
+        ["Refund settled", canonicalRefund?.reward_claimed === true],
       ] as const,
-    [canonicalJob]
+    [canonicalJob, canonicalRefund]
   );
 
   const integrityPassed = integrityChecks.filter(([, passed]) => passed).length;
