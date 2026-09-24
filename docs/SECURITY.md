@@ -68,7 +68,7 @@ Each agreement stores:
 - `settled_at`
 - `policy_version`
 
-Current policy: `PJ_V3_MINCONF70`.
+Current policy: `PJ_V4_SNAPSHOT_CHALLENGE`.
 
 ## Verified adverse path
 
@@ -78,3 +78,29 @@ Workflow:
 https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296
 
 ProofJudge remains a Studionet prototype, not legal arbitration or a production financial service.
+
+
+## V4 evidence immutability and equivalence
+
+During resolution, leader and validators independently render both public URLs and normalize bounded text snapshots. Consensus accepts only when the validator matches the leader on:
+
+- approved/rejected state;
+- exact reason code;
+- exact evidence-basis code;
+- exact primary evidence snapshot;
+- exact support evidence snapshot;
+- confidence within a 10-point tolerance.
+
+The accepted snapshots are stored on-chain with the result. If a mutable URL serves different material to the validator, snapshot equality fails and the validator rejects the leader result.
+
+Missing/empty rendered evidence fails closed as `SOURCE_UNAVAILABLE`. Materially conflicting evidence has the explicit `CONTRADICTORY_EVIDENCE` failure path.
+
+## Challenge and stalled-resolution recovery
+
+A sponsor or assigned contractor may challenge one APPROVED or REJECTED result. The agreement becomes `CHALLENGED`; claim is blocked until permissionless `resolve_challenge` performs fresh consensus.
+
+To avoid permanent escrow lock when resolution cannot complete, SUBMITTED or CHALLENGED work receives a 24-hour grace period after the deadline. Only after that grace may the sponsor recover stalled escrow. OPEN/REJECTED expiry keeps the ordinary refund path.
+
+## Transfer safety evidence
+
+Before emitting a payout/refund, the contract verifies sufficient balance and marks settlement single-use. Direct tests prove insufficient balance cannot flip an APPROVED job to paid, unauthorized callers cannot claim/refund, early refunds fail, and repeated claims fail. The live Studionet workflow separately proves finalized native-GEN contractor claim and sponsor refund transactions.
