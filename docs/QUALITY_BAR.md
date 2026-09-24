@@ -1,30 +1,38 @@
-# ProofJudge — Project Quality Bar
+# ProofJudge — Reviewer Quality Mapping
 
-| Review dimension | ProofJudge implementation | Verifiable proof |
+| Review dimension | Implementation | Verifiable evidence |
 | --- | --- | --- |
-| Real trust problem | A sponsor and contractor need objective settlement infrastructure for subjective deliverables without trusting one platform operator. | Native GEN is escrowed and claimability is contract-controlled. |
-| GenLayer is central | Removing GenLayer removes the live evidence judge that authorizes payment. | `resolve_job` uses live web retrieval, LLM evaluation and validator re-execution before state changes. |
-| Economic consequence | Consensus approval changes who can withdraw value. | APPROVED → contractor claim; expired OPEN/REJECTED → sponsor refund. |
-| Precommitted rules | Requirement and rubric are stored before evidence is submitted. | `create_job` state. |
-| Independent evidence | Contractor must provide two HTTPS URLs from distinct hostnames. | `submit_evidence` guards + direct test. |
-| Prompt-injection resistance | Fetched pages are explicitly untrusted; output is schema-bounded. | `_evaluate` prompt and structured fields. |
-| Validator verification | Validators independently fetch and judge the same live sources. | custom `validator_fn`; exact approved/rejected agreement + confidence tolerance. |
-| Contractor accountability | Only the assigned contractor may submit or claim. | sender guards + direct tests. |
-| Retry path | Rejected evidence can be replaced before deadline without creating a new agreement. | REJECTED → SUBMITTED, max 3 attempts. |
-| Refund safety | Sponsor cannot bypass unresolved submitted work. | `refund_expired` rejects SUBMITTED state. |
-| On-chain discovery | Jobs can be enumerated without a pre-known ID. | `get_job_count`, `get_job_id`, production cards. |
-| Reviewer-proof demo | Canonical live settlement loads without wallet and self-checks against a pinned benchmark. | 8/8 integrity gate + Explorer lifecycle. |
-| Complete application | Sponsor, contractor and settlement actions exist in the production UI. | Next.js frontend + GenLayerJS writes/reads. |
-| Reproducibility | Direct tests, lint, build and a fresh live Studionet lifecycle are automated. | CI + run 35925077495. |
+| Clear real use case | Bilateral milestone acceptance and payment without one centralized reviewer. | Production sponsor/contractor UI and native GEN escrow. |
+| GenLayer is central | Live public evidence and natural-language criteria are adjudicated inside the Intelligent Contract. | `_evaluate`, `gl.nondet.web.render`, `gl.nondet.exec_prompt`. |
+| Independent consensus | Validators independently re-fetch evidence and repeat the decision. | custom validator + direct dissent test. |
+| Economic consequence | Consensus decides whether contractor claim becomes possible. | live PAID lifecycle. |
+| Negative economic safety | Irrelevant evidence does not unlock funds. | live REJECTED → REFUNDED lifecycle. |
+| Confidence safety | Approval below 70/100 cannot become economically actionable. | normalization + claim guard + direct test. |
+| Source failure safety | Web-fetch failures cannot accidentally approve. | `SOURCE_UNAVAILABLE` failure reason. |
+| Precommitted rules | Requirement and rubric exist before submission. | `create_job`. |
+| Contractor accountability | Only assigned contractor submits and claims. | sender guards + tests. |
+| Evidence independence | Two HTTPS sources from distinct hostnames are required. | submit guards + test. |
+| Retry control | Rejected work can retry without unlimited consensus shopping. | maximum three attempts + test. |
+| Refund control | Submitted evidence cannot be bypassed by sponsor refund. | refund state guard. |
+| Accidental lock protection | zero-address contractor and >365-day deadlines are rejected. | contract guards + tests. |
+| Auditability | lifecycle timestamps and policy version are stored on-chain. | v3 Job state + UI. |
+| Discovery | agreements are indexed on-chain. | `get_job_count`, `get_job_id`. |
+| Reviewer proof | walletless app reads both canonical outcomes live. | 12-check integrity gate. |
+| Reproducibility | fresh network deployment proves positive and negative paths. | workflow 35985412296. |
+| Engineering checks | direct tests, strict mocks, pickling, lint, production build. | CI. |
 
-## Verified benchmark
+## Canonical proof
 
-- Contract: `0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc`
-- Workflow: https://github.com/maho0638/proofjudge-genlayer/actions/runs/35925077495
-- Job: `example-domain-milestone-v2`
-- Status: `PAID`
-- Confidence: `97/100`
-- Reason: `CROSS_CHECK`
-- Reward claimed: `true`
+Contract:
+`0x699f62FA0f53B92D85949B1F046f6B50209707eE`
 
-This mapping is a reviewer aid, not a guarantee of a specific Portal point award.
+Workflow:
+https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296
+
+Paid:
+`proofjudge-production-milestone-v3 · PAID · 98/100 · CROSS_CHECK`
+
+Rejected/refunded:
+`irrelevant-evidence-refund-v1 · EVIDENCE_GAP · 2/100 · REFUNDED`
+
+This document maps product qualities to evidence. It is not a promise of a particular Portal score.
