@@ -55,9 +55,9 @@ The current contract hardens the economic decision:
 
 - **Network:** GenLayer Studionet
 - **Chain ID:** 61999
-- **Contract:** `0x699f62FA0f53B92D85949B1F046f6B50209707eE`
-- **Explorer:** https://explorer-studio.genlayer.com/address/0x699f62FA0f53B92D85949B1F046f6B50209707eE
-- **Successful full live workflow:** https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296
+- **Contract:** `0x76D61aAec5bD4625346858acCd6dAb39966c4247`
+- **Explorer:** https://explorer-studio.genlayer.com/address/0x76D61aAec5bD4625346858acCd6dAb39966c4247
+- **Successful full live workflow:** https://github.com/maho0638/proofjudge-genlayer/actions/runs/35993240108
 
 ### Outcome A — real production milestone → PAID
 
@@ -68,17 +68,17 @@ The primary evidence was the real ProofJudge production deployment and the indep
 - production evidence: https://proofjudge-genlayer-frontend.vercel.app
 - independent support: https://raw.githubusercontent.com/maho0638/proofjudge-genlayer/main/README.md
 - decision: `APPROVED`
-- confidence: `98/100`
+- confidence: `100/100`
 - reason: `CROSS_CHECK`
 - final state: `PAID`
 - contractor reward claimed: `true`
 
 Transactions:
 
-- create escrow: https://explorer-studio.genlayer.com/tx/0xb9cdb9211b7775911b70e4af93b0408644c5d9ddafb0123d20fbcfc20dd62c9b
-- submit evidence: https://explorer-studio.genlayer.com/tx/0x82e871f6510cf5e8af66e778a7b879e4a19d04f01c717103862d43bd5c19eb6d
-- resolve consensus: https://explorer-studio.genlayer.com/tx/0x3fa02241eb60d23604ab3bde2d1eee9334794557f73af280f3ae3abdc2752bef
-- claim payment: https://explorer-studio.genlayer.com/tx/0x8c98e573115a3a41a28456c59aa4eef1060ab1fdc713a69db74b50bd05d18013
+- create escrow: https://explorer-studio.genlayer.com/tx/0x837404d9b4d0b68fdb62fabe7f5e3149cd63d8a60bb3c7bf237cb1c41dada4a5
+- submit evidence: https://explorer-studio.genlayer.com/tx/0x142aa651083f34586dda375a390e18a78d82c47a51b639fe056de1e9da0bd23e
+- resolve consensus: https://explorer-studio.genlayer.com/tx/0x18ecf17cdfea62dba009b76900dc928e1e068b2f3a27880dc9b98774decf8c9b
+- claim payment: https://explorer-studio.genlayer.com/tx/0x47948c1f269f7aeb6386a57e6a85063b3c110b082965c9292d9c359799884e78
 
 ### Outcome B — irrelevant evidence → REJECTED → REFUNDED
 
@@ -87,7 +87,7 @@ Job: `irrelevant-evidence-refund-v1`
 The submitted pages were intentionally unrelated to the committed ProofJudge milestone.
 
 - consensus decision: `REJECTED`
-- confidence in the rejected submission: `2/100`
+- rejection confidence: `95/100`
 - reason: `EVIDENCE_GAP`
 - contractor payout never opened
 - after deadline the sponsor recovered escrow
@@ -95,10 +95,10 @@ The submitted pages were intentionally unrelated to the committed ProofJudge mil
 
 Transactions:
 
-- create escrow: https://explorer-studio.genlayer.com/tx/0xd29492ee5f16e2d595b6792d17058c325ab0a9b4456cd7763eedfa2a01ebf637
-- submit irrelevant evidence: https://explorer-studio.genlayer.com/tx/0xa790bb59991bd38e6e211cebcccba62fe2ea3870d1163cb1313d47dc7eeb18d0
-- consensus rejects: https://explorer-studio.genlayer.com/tx/0xdab3ff727e806eda7b716290eececea0def16f2b5fd846cb1f29a89d21c86dfb
-- sponsor refund: https://explorer-studio.genlayer.com/tx/0x794aabd5d29b0391503a969108342b96a350e654bcea8d9ad2831810d94f05dc
+- create escrow: https://explorer-studio.genlayer.com/tx/0xed33290bff46f59aa60e9ecedd01075ad3ee7e0fa89db60bfaee7a2d0bb368ac
+- submit irrelevant evidence: https://explorer-studio.genlayer.com/tx/0x22a31fe953b3de027ae57bd38fff6d9bcd1afe823f0dc5c4f3d5722177d4720d
+- consensus rejects: https://explorer-studio.genlayer.com/tx/0x7f4d829bc8f1524a31262e8df7dc8e8b290989c9bf06a9f947a8eaa810eb3a32
+- sponsor refund: https://explorer-studio.genlayer.com/tx/0x99573fc7dc9d079ad7b3335a466339e452514c4d42a98df5930f8f8961562e49
 
 ## Frontend product
 
@@ -131,7 +131,16 @@ CI verifies:
 - GenVM lint and validation;
 - Next.js production build.
 
-The live workflow separately deploys a fresh contract on Studionet and executes both economic outcomes end to end.
+The live workflow separately deploys a fresh contract on Studionet, executes both economic outcomes end to end, and then reads the deployed source back from Studionet to prove it matches `contracts/proof_judge.py`.
+
+## Deployed-source attestation
+
+The canonical successful workflow reports:
+
+- deploy-input SHA-256: `9d523f2014dd502fc696f58d9ddfd832d856f2c2a55885e7fde2672a546a850b`
+- deployed normalized SHA-256: `0cba1187b5478d885f8c150e1597298d4bc550b7552a01862c43eaeaa4f79ca9`
+- repository normalized SHA-256: `0cba1187b5478d885f8c150e1597298d4bc550b7552a01862c43eaeaa4f79ca9`
+- `DEPLOYED_SOURCE_MATCH=true`
 
 ## Reviewer map
 
