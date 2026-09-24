@@ -7,6 +7,7 @@ on:
       - ".github/workflows/deploy-studionet.yml"
       - "contracts/proof_judge.py"
       - "tests/integration/test_studionet_smoke.py"
+      - "scripts/verify-deployed-source.mjs"
   workflow_dispatch:
 
 jobs:
@@ -18,8 +19,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
       - run: pip install -r requirements.txt
+      - run: npm install
       - name: Deploy and execute full ProofJudge escrow lifecycle
+        id: live
         shell: bash
         run: |
           set -o pipefail
@@ -29,3 +35,10 @@ jobs:
           grep -Eq 'PROOFJUDGE_CONTRACT_ADDRESS=0x[a-fA-F0-9]{40}' /tmp/proofjudge-live.log
           grep -q 'PROOFJUDGE_PAID_REWARD_CLAIMED=true' /tmp/proofjudge-live.log
           grep -q 'PROOFJUDGE_REFUNDED=true' /tmp/proofjudge-live.log
+          ADDRESS="$(grep -oE 'PROOFJUDGE_CONTRACT_ADDRESS=0x[a-fA-F0-9]{40}' /tmp/proofjudge-live.log | tail -1 | cut -d= -f2)"
+          test -n "$ADDRESS"
+          echo "contract_address=$ADDRESS" >> "$GITHUB_OUTPUT"
+      - name: Verify deployed contract source matches repository exactly
+        env:
+          CONTRACT_ADDRESS: ${{ steps.live.outputs.contract_address }}
+        run: node scripts/verify-deployed-source.mjs
