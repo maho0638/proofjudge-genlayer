@@ -12,7 +12,7 @@ declare global {
 }
 
 export const CONTRACT_ADDRESS =
-  "0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc" as `0x${string}`;
+  "0x699f62FA0f53B92D85949B1F046f6B50209707eE" as `0x${string}`;
 
 export function readClient() {
   const config: any = { chain: studionet };

@@ -1,23 +1,46 @@
 {
   "network": "GenLayer Studionet",
   "chainId": 61999,
-  "contract": "0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc",
-  "jobId": "example-domain-milestone-v2",
-  "workflow": "https://github.com/maho0638/proofjudge-genlayer/actions/runs/35925077495",
-  "expected": {
-    "status": "PAID",
-    "confidence": 97,
-    "reasonCode": "CROSS_CHECK",
-    "rewardClaimed": true,
-    "attemptCount": 1,
-    "evidenceUrl": "https://example.com",
-    "supportUrl": "https://www.iana.org/help/example-domains",
-    "rationale": "Approved because independent support corroborates the primary evidence. Confidence 97/100."
+  "contract": "0x699f62FA0f53B92D85949B1F046f6B50209707eE",
+  "workflow": "https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296",
+  "paidOutcome": {
+    "jobId": "proofjudge-production-milestone-v3",
+    "expected": {
+      "status": "PAID",
+      "confidence": 98,
+      "reasonCode": "CROSS_CHECK",
+      "rewardClaimed": true,
+      "attemptCount": 1,
+      "evidenceUrl": "https://proofjudge-genlayer-frontend.vercel.app",
+      "supportUrl": "https://raw.githubusercontent.com/maho0638/proofjudge-genlayer/main/README.md",
+      "rationale": "Approved because independent support corroborates the primary evidence. Confidence 98/100.",
+      "policyVersion": "PJ_V3_MINCONF70"
+    },
+    "transactions": {
+      "create": "0xb9cdb9211b7775911b70e4af93b0408644c5d9ddafb0123d20fbcfc20dd62c9b",
+      "submit": "0x82e871f6510cf5e8af66e778a7b879e4a19d04f01c717103862d43bd5c19eb6d",
+      "resolve": "0x3fa02241eb60d23604ab3bde2d1eee9334794557f73af280f3ae3abdc2752bef",
+      "claim": "0x8c98e573115a3a41a28456c59aa4eef1060ab1fdc713a69db74b50bd05d18013"
+    }
   },
-  "transactions": {
-    "create": "0x0b42a662a7e9f6da6b09ff5fdb49f593781ba28f6bb508d3b70a18936a0838c6",
-    "submit": "0x021ec1dc5c5afa5181c236b59a56b424b1e53953dd5459bcb9492165872db77d",
-    "resolve": "0x2621e4f4a2ecedb901c5e1ad25c975d4762e999918e37c6f56c70a255e7fb7db",
-    "claim": "0x3d183cafb0ac32e5cd319f0059e53dce220982b0c4e8c43b5a58be044ce5e1dd"
+  "refundedOutcome": {
+    "jobId": "irrelevant-evidence-refund-v1",
+    "expected": {
+      "status": "REFUNDED",
+      "rejectionConfidence": 2,
+      "reasonCode": "EVIDENCE_GAP",
+      "rewardSettled": true,
+      "attemptCount": 1,
+      "evidenceUrl": "https://example.com",
+      "supportUrl": "https://www.iana.org/help/example-domains",
+      "rationale": "Rejected because the submitted evidence is insufficient or ambiguous. Confidence 2/100.",
+      "policyVersion": "PJ_V3_MINCONF70"
+    },
+    "transactions": {
+      "create": "0xd29492ee5f16e2d595b6792d17058c325ab0a9b4456cd7763eedfa2a01ebf637",
+      "submit": "0xa790bb59991bd38e6e211cebcccba62fe2ea3870d1163cb1313d47dc7eeb18d0",
+      "resolveReject": "0xdab3ff727e806eda7b716290eececea0def16f2b5fd846cb1f29a89d21c86dfb",
+      "refund": "0x794aabd5d29b0391503a969108342b96a350e654bcea8d9ad2831810d94f05dc"
+    }
   }
 }

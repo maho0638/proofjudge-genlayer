@@ -447,3 +447,28 @@ button:disabled{opacity:.38;cursor:not-allowed}
 @media(max-width:520px){
   .marketSummary{grid-template-columns:1fr}
 }
+
+.refundCard{
+  border-color:rgba(255,184,94,.28);
+  background:
+    radial-gradient(circle at 90% 0%,rgba(255,184,94,.06),transparent 34%),
+    #0b1119;
+}
+.outcomeNote{
+  display:grid;
+  gap:5px;
+  margin-top:12px;
+  padding:13px 14px;
+  border:1px solid rgba(255,184,94,.24);
+  border-radius:12px;
+  background:rgba(255,184,94,.035);
+}
+.outcomeNote b{
+  font-size:11px;
+  color:#ffd08a;
+}
+.outcomeNote span{
+  color:#8f9cad;
+  font-size:10px;
+  line-height:1.55;
+}

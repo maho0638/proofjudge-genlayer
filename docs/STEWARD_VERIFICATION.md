@@ -1,64 +1,93 @@
-# Steward Verification — ProofJudge
+# Steward Verification — ProofJudge v3
 
-ProofJudge is a GenLayer-native milestone escrow. The fastest verification path does not require a wallet.
+The fastest review path requires no wallet and takes only a few minutes.
 
 ## 1. Open the production app
 
 https://proofjudge-genlayer-frontend.vercel.app
 
-Scroll to **Verified Live Proof**. The page should read job `example-domain-milestone-v2` directly from the deployed Studionet Intelligent Contract.
+Scroll to **Verified Live Proof**.
 
-Expected live state:
-
-- contract: `0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc`
-- status: `PAID`
-- confidence: `97/100`
-- reason code: `CROSS_CHECK`
-- reward claimed: `true`
-- attempt count: `1`
-- primary evidence host: `example.com`
-- independent support host: `iana.org`
-
-The reviewer integrity gate should show **8/8 live checks match — PASS** when the public Studionet RPC is available.
-
-If RPC access is temporarily unavailable, the UI clearly labels the pinned benchmark as a fallback and does not call cached data live.
-
-## 2. Verify the economic lifecycle
+The page reads two jobs directly from the deployed Studionet contract:
 
 Contract:
-https://explorer-studio.genlayer.com/address/0xA9BDf49634aC02Ce15a2Ad0eF0B220972561FbFc
+`0x699f62FA0f53B92D85949B1F046f6B50209707eE`
 
-Create native GEN escrow:
-https://explorer-studio.genlayer.com/tx/0x0b42a662a7e9f6da6b09ff5fdb49f593781ba28f6bb508d3b70a18936a0838c6
+Explorer:
+https://explorer-studio.genlayer.com/address/0x699f62FA0f53B92D85949B1F046f6B50209707eE
 
-Assigned contractor submits two independent evidence URLs:
-https://explorer-studio.genlayer.com/tx/0x021ec1dc5c5afa5181c236b59a56b424b1e53953dd5459bcb9492165872db77d
+The reviewer integrity gate should show **12/12 live checks match — PASS** when the public Studionet RPC is reachable.
 
-Resolve by validator consensus:
-https://explorer-studio.genlayer.com/tx/0x2621e4f4a2ecedb901c5e1ad25c975d4762e999918e37c6f56c70a255e7fb7db
+## 2. Verify the paid path
 
-Contractor claims the approved escrow:
-https://explorer-studio.genlayer.com/tx/0x3d183cafb0ac32e5cd319f0059e53dce220982b0c4e8c43b5a58be044ce5e1dd
+Job: `proofjudge-production-milestone-v3`
 
-## 3. Reproduce a fresh lifecycle
+Expected:
 
-Workflow:
-https://github.com/maho0638/proofjudge-genlayer/actions/runs/35925077495
+- status: `PAID`
+- confidence: `98/100`
+- reason: `CROSS_CHECK`
+- reward claimed: `true`
+- policy: `PJ_V3_MINCONF70`
 
-The integration test deploys a fresh contract and executes:
+Primary evidence:
+https://proofjudge-genlayer-frontend.vercel.app
 
-`deploy → create escrow → submit evidence → consensus resolve → contractor claim`
+Independent support:
+https://raw.githubusercontent.com/maho0638/proofjudge-genlayer/main/README.md
 
-It asserts the live result is APPROVED with a valid structured reason, then asserts the post-claim job is PAID and `reward_claimed=true`.
+Transactions:
 
-## 4. Inspect settlement-critical source
+1. create escrow  
+   https://explorer-studio.genlayer.com/tx/0xb9cdb9211b7775911b70e4af93b0408644c5d9ddafb0123d20fbcfc20dd62c9b
+2. submit evidence  
+   https://explorer-studio.genlayer.com/tx/0x82e871f6510cf5e8af66e778a7b879e4a19d04f01c717103862d43bd5c19eb6d
+3. consensus resolution  
+   https://explorer-studio.genlayer.com/tx/0x3fa02241eb60d23604ab3bde2d1eee9334794557f73af280f3ae3abdc2752bef
+4. contractor claim  
+   https://explorer-studio.genlayer.com/tx/0x8c98e573115a3a41a28456c59aa4eef1060ab1fdc713a69db74b50bd05d18013
 
-- Contract: `contracts/proof_judge.py`
-- Direct tests: `tests/direct/test_proof_judge.py`
-- Live integration: `tests/integration/test_studionet_smoke.py`
-- Browser client: `frontend/lib/genlayer.ts`
-- Machine-readable proof: `frontend/public/verified-demo.json`
+## 3. Verify the rejection + refund path
 
-## 5. What GenLayer changes
+Job: `irrelevant-evidence-refund-v1`
 
-The UI never submits an already-decided verdict. It submits the agreement and evidence references. The Intelligent Contract itself fetches the public evidence, evaluates the natural-language criteria, asks validators to independently repeat the evaluation, stores the accepted result and controls whether the contractor can claim escrowed GEN.
+Expected decision:
+
+- `REJECTED`
+- confidence: `2/100`
+- reason: `EVIDENCE_GAP`
+
+Expected final state:
+
+- `REFUNDED`
+- escrow settled back to sponsor
+
+Transactions:
+
+1. create escrow  
+   https://explorer-studio.genlayer.com/tx/0xd29492ee5f16e2d595b6792d17058c325ab0a9b4456cd7763eedfa2a01ebf637
+2. submit irrelevant evidence  
+   https://explorer-studio.genlayer.com/tx/0xa790bb59991bd38e6e211cebcccba62fe2ea3870d1163cb1313d47dc7eeb18d0
+3. consensus rejects  
+   https://explorer-studio.genlayer.com/tx/0xdab3ff727e806eda7b716290eececea0def16f2b5fd846cb1f29a89d21c86dfb
+4. sponsor refund  
+   https://explorer-studio.genlayer.com/tx/0x794aabd5d29b0391503a969108342b96a350e654bcea8d9ad2831810d94f05dc
+
+This proves the system does not merely demonstrate payout. It also demonstrates that bad evidence fails to unlock contractor funds.
+
+## 4. Reproduce both outcomes
+
+Successful workflow:
+https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296
+
+It deploys a fresh contract and executes both outcomes end to end.
+
+## 5. Inspect settlement-critical source
+
+- contract: `contracts/proof_judge.py`
+- direct tests: `tests/direct/test_proof_judge.py`
+- live integration: `tests/integration/test_studionet_smoke.py`
+- browser client: `frontend/lib/genlayer.ts`
+- machine-readable proof: `frontend/public/verified-demo.json`
+
+The frontend never supplies a pre-decided verdict. The Intelligent Contract fetches evidence, obtains the proposed result, validators independently re-evaluate, and accepted consensus controls economic state.

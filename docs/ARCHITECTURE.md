@@ -7,7 +7,8 @@ Sponsor wallet
    v
 ProofJudge Intelligent Contract
    |
-   | stores contractor + requirement + rubric + deadline + escrow
+   | stores contractor + requirement + rubric + deadline
+   | stores policy PJ_V3_MINCONF70 + audit timestamps
    |
 Contractor wallet
    |
@@ -18,14 +19,14 @@ ProofJudge Intelligent Contract
    +--> gl.nondet.web.render(primary)
    +--> gl.nondet.web.render(support)
    +--> gl.nondet.exec_prompt(structured verdict)
-   +--> validator re-execution
+   +--> custom validator re-fetch + re-evaluation
    |
    v
-APPROVED / REJECTED
+APPROVED (confidence >= 70) / REJECTED
    |
-   +--> APPROVED: assigned contractor claim_payment
-   +--> REJECTED: retry before deadline
-   +--> expired OPEN/REJECTED: sponsor refund_expired
+   +--> APPROVED: assigned contractor claim_payment -> PAID
+   +--> REJECTED: retry before deadline (max 3)
+   +--> expired OPEN/REJECTED: sponsor refund_expired -> REFUNDED
 ```
 
 ## State model
@@ -36,8 +37,21 @@ APPROVED / REJECTED
 
 `OPEN/REJECTED → REFUNDED` only after deadline.
 
-A SUBMITTED agreement cannot be refunded because unresolved evidence must not be bypassed.
+A SUBMITTED agreement cannot be refunded because unresolved evidence must first receive a consensus outcome.
+
+## Consensus boundary
+
+The client submits criteria and URLs, not a verdict. The accepted decision is created and verified inside GenLayer. A low-confidence approval cannot unlock payment.
 
 ## Frontend boundary
 
-The frontend does not decide settlement. It validates inputs, submits contract calls, waits for finalized successful execution and reads contract state. The reviewer proof section reads the canonical Studionet job directly without requesting a wallet.
+The Next.js frontend:
+
+- discovers jobs from the contract index;
+- reads the canonical PAID and REFUNDED proofs without a wallet;
+- validates obvious input errors before transactions;
+- submits writes through GenLayerJS;
+- waits for FINALIZED + FINISHED_WITH_RETURN;
+- displays role-aware controls and Explorer-verifiable transaction activity.
+
+The frontend never substitutes its own acceptance decision for contract consensus.
