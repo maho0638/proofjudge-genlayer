@@ -498,7 +498,7 @@ export default function Home() {
             <div><img className="protocolLogo" src="/proofjudge-logo.png" alt="" aria-hidden="true" /><div><small>PROOFJUDGE PROTOCOL</small><b>Evidence-backed payout</b></div></div>
             <span className="chainBadge">61999</span>
           </div>
-          <div className="protocolLive"><i /> {verifiedProofState === "live" ? "STUDIONET VERIFIED" : verifiedProofState === "error" ? "RPC CHECK DEGRADED" : "VERIFYING STUDIONET"} <b>GEN</b></div>
+          <div className="protocolLive"><i /> {verifiedProofState === "live" ? "STUDIONET VERIFIED" : verifiedProofState === "error" ? "RPC CHECK DEGRADED" : "VERIFYING STUDIONET"} <b>{sourceMatch === "match" ? "SOURCE MATCH" : "GEN"}</b></div>
           <div className="protocolSteps">
             <div><span>01</span><b>Lock escrow</b><small>Sponsor commits value</small></div>
             <div><span>02</span><b>Submit proof</b><small>Contractor provides evidence</small></div>
@@ -539,7 +539,7 @@ export default function Home() {
           </div>
         </div>
         <div className="reviewLinks">
-          <a href="#proof"><span>01</span><div><b>Read two live outcomes</b><small>12 contract checks · no wallet</small></div><i>↓</i></a>
+          <a href="#proof"><span>01</span><div><b>Read two live outcomes</b><small>{integrityChecks.length} live checks · no wallet</small></div><i>↓</i></a>
           <a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer"><span>02</span><div><b>Inspect Studionet contract</b><small>escrow · resolve · payout · refund</small></div><i>↗</i></a>
           <a href={verifiedDemo.workflow} target="_blank" rel="noreferrer"><span>03</span><div><b>Reproduce both paths</b><small>fresh deployment in CI</small></div><i>↗</i></a>
           <a href="/verified-demo.json" target="_blank" rel="noreferrer"><span>04</span><div><b>Open machine proof</b><small>canonical IDs · results · tx hashes</small></div><i>↗</i></a>
@@ -633,14 +633,20 @@ export default function Home() {
             </div>
             <blockquote>{canonicalJob?.rationale || "Loading the verified settlement rationale…"}</blockquote>
             <div className="evidencePair">
-              <a href={String(canonicalJob?.evidence_url || verifiedDemo.expected.evidence_url)} target="_blank" rel="noreferrer">
-                <small>LIVE PRODUCTION DELIVERABLE</small>
-                <b>{host(String(canonicalJob?.evidence_url || verifiedDemo.expected.evidence_url))}</b><span>Open ↗</span>
-              </a>
-              <a href={String(canonicalJob?.support_url || verifiedDemo.expected.support_url)} target="_blank" rel="noreferrer">
-                <small>INDEPENDENT REPOSITORY SUPPORT</small>
-                <b>{host(String(canonicalJob?.support_url || verifiedDemo.expected.support_url))}</b><span>Open ↗</span>
-              </a>
+              {canonicalJob ? (
+                <>
+                  <a href={String(canonicalJob.evidence_url)} target="_blank" rel="noreferrer">
+                    <small>LIVE PRODUCTION DELIVERABLE</small>
+                    <b>{host(String(canonicalJob.evidence_url))}</b><span>Open ↗</span>
+                  </a>
+                  <a href={String(canonicalJob.support_url)} target="_blank" rel="noreferrer">
+                    <small>INDEPENDENT REPOSITORY SUPPORT</small>
+                    <b>{host(String(canonicalJob.support_url))}</b><span>Open ↗</span>
+                  </a>
+                </>
+              ) : (
+                <div className="evidenceUnavailable">Live evidence links are withheld until the Studionet contract read succeeds.</div>
+              )}
             </div>
           </article>
 
@@ -746,10 +752,12 @@ export default function Home() {
                 </div>
                 <div className="settleControls">
                   <label>Job ID<input value={settlementId} onChange={(e) => setSettlementId(e.target.value)} /></label>
-                  <button className="secondaryBtn" onClick={() => loadJob()} disabled={!!busy}>{busy === "read" ? "Reading…" : "Read state"}</button>
-                  <button onClick={() => settle("resolve_job")} disabled={!!busy || loadedJob?.status !== "SUBMITTED"}>{busy === "resolve_job" ? "Resolving…" : "Resolve by consensus"}</button>
+                  <button className="secondaryBtn" type="button" onClick={() => loadJob()} disabled={!!busy}>{busy === "read" ? "Reading…" : "Read state"}</button>
+                  <button type="button" onClick={() => settle("resolve_job")} disabled={!!busy || loadedJob?.status !== "SUBMITTED"}>{busy === "resolve_job" ? "Resolving…" : "Resolve by consensus"}</button>
+                  <button type="button" onClick={() => settle("resolve_challenge")} disabled={!!busy || loadedJob?.status !== "CHALLENGED"}>{busy === "resolve_challenge" ? "Re-resolving…" : "Resolve challenge"}</button>
                   <button
                     className="secondaryBtn"
+                    type="button"
                     onClick={() => settle("claim_payment")}
                     disabled={
                       !!busy ||
@@ -759,13 +767,28 @@ export default function Home() {
                   >{busy === "claim_payment" ? "Claiming…" : "Claim payment"}</button>
                   <button
                     className="secondaryBtn"
+                    type="button"
                     onClick={() => settle("refund_expired")}
                     disabled={
                       !!busy ||
-                      !["OPEN", "REJECTED"].includes(String(loadedJob?.status)) ||
+                      !["OPEN", "REJECTED", "SUBMITTED", "CHALLENGED"].includes(String(loadedJob?.status)) ||
                       (!!account && normalizedAccount !== sponsorAddress)
                     }
-                  >{busy === "refund_expired" ? "Refunding…" : "Refund expired"}</button>
+                  >{busy === "refund_expired" ? "Refunding…" : "Refund expired / stalled"}</button>
+                  <div className="challengeControl">
+                    <label>Challenge note<input value={challengeNote} onChange={(e) => setChallengeNote(e.target.value)} placeholder="Explain why the resolved decision should be re-checked…" /></label>
+                    <button
+                      className="secondaryBtn"
+                      type="button"
+                      onClick={challengeResolution}
+                      disabled={
+                        !!busy ||
+                        !["APPROVED", "REJECTED"].includes(String(loadedJob?.status)) ||
+                        Number(loadedJob?.challenge_count ?? 0) >= 1 ||
+                        (!!account && ![sponsorAddress, contractorAddress].includes(normalizedAccount))
+                      }
+                    >{busy === "challenge_resolution" ? "Challenging…" : "Challenge decision"}</button>
+                  </div>
                 </div>
                 {loadedJob ? (
                   <div className="loadedState">
@@ -779,11 +802,21 @@ export default function Home() {
                       <div><small>Deadline</small><b>{deadlineText(loadedJob.deadline)}</b></div>
                       <div><small>Reward claimed</small><b>{loadedJob.reward_claimed ? "Yes" : "No"}</b></div>
                       <div><small>Policy</small><b>{loadedJob.policy_version || "Legacy"}</b></div>
+                      <div><small>Evidence basis</small><b>{loadedJob.evidence_basis || "—"}</b></div>
+                      <div><small>Challenges</small><b>{Number(loadedJob.challenge_count ?? 0)}/1</b></div>
                       <div><small>Created</small><b>{deadlineText(loadedJob.created_at)}</b></div>
                       <div><small>Submitted</small><b>{deadlineText(loadedJob.submitted_at)}</b></div>
                       <div><small>Resolved</small><b>{deadlineText(loadedJob.resolved_at)}</b></div>
+                      <div><small>Challenged</small><b>{deadlineText(loadedJob.challenged_at)}</b></div>
                       <div><small>Settled</small><b>{deadlineText(loadedJob.settled_at)}</b></div>
                     </div>
+                    {(loadedJob.primary_snapshot || loadedJob.support_snapshot) && (
+                      <div className="snapshotGrid">
+                        <div><small>PRIMARY SNAPSHOT</small><p>{loadedJob.primary_snapshot || "—"}</p></div>
+                        <div><small>SUPPORT SNAPSHOT</small><p>{loadedJob.support_snapshot || "—"}</p></div>
+                      </div>
+                    )}
+                    {loadedJob.challenge_note && <div className="challengeNote"><small>CHALLENGE</small><p>{loadedJob.challenge_note}</p></div>}
                     {loadedJob.rationale && <blockquote>{loadedJob.rationale}</blockquote>}
                   </div>
                 ) : <div className="statePlaceholder">Load a job to inspect its contract state.</div>}
@@ -820,8 +853,9 @@ export default function Home() {
           <article><span>02</span><b>Assigned contractor</b><p>Only the sponsor-selected wallet can submit evidence or claim an approved payment.</p></article>
           <article><span>03</span><b>Independent sources</b><p>Primary and supporting evidence must use separate HTTPS hostnames.</p></article>
           <article><span>04</span><b>Retry without gaming</b><p>Rejected evidence can be replaced before deadline, but attempts are capped at three.</p></article>
-          <article><span>05</span><b>Consensus before money</b><p>Approval and confidence must survive independent validator re-execution.</p></article>
-          <article><span>06</span><b>Guarded refund</b><p>Expired OPEN or REJECTED work can be refunded; unresolved submitted evidence cannot be bypassed.</p></article>
+          <article><span>05</span><b>Snapshot-equivalent consensus</b><p>Validators must match the decision, reason, evidence basis and normalized evidence snapshots before state changes.</p></article>
+          <article><span>06</span><b>One-shot challenge</b><p>Sponsor or contractor can challenge one resolved decision; payout stays blocked until fresh consensus resolves it.</p></article>
+          <article><span>07</span><b>Guarded stalled refund</b><p>OPEN or REJECTED work refunds after deadline; SUBMITTED or CHALLENGED work gets a 24-hour resolution grace before recovery.</p></article>
         </div>
       </section>
 
@@ -862,7 +896,7 @@ export default function Home() {
 
       <footer className="footer">
         <div className="brand"><img className="brandLogo" src="/proofjudge-logo.png" alt="ProofJudge logo" /><span><b>ProofJudge</b><small>EVIDENCE-BASED MILESTONE SETTLEMENT</small></span></div>
-        <div><span className="footerVersion">v3 · PJ_V3_MINCONF70</span><a href="/verified-demo.json" target="_blank">Proof JSON ↗</a><a href="https://github.com/maho0638/proofjudge-genlayer" target="_blank">GitHub ↗</a><a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank">GenLayer Explorer ↗</a></div>
+        <div><span className="footerVersion">v4 · PJ_V4_SNAPSHOT_CHALLENGE</span><a href="/verified-demo.json" target="_blank">Proof JSON ↗</a><a href="https://github.com/maho0638/proofjudge-genlayer" target="_blank">GitHub ↗</a><a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank">GenLayer Explorer ↗</a></div>
       </footer>
     </main>
   );
