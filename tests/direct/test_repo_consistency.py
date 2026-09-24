@@ -37,3 +37,17 @@ def test_frontend_constant_matches_machine_readable_proof():
     match = re.search(r'CONTRACT_ADDRESS\s*=\s*\n?\s*"(0x[a-fA-F0-9]{40})"', source)
     assert match, "Could not locate CONTRACT_ADDRESS in frontend client"
     assert match.group(1).lower() == demo["contract"].lower()
+
+
+def test_runtime_source_mirror_matches_contract_source_exactly():
+    contract_source = (ROOT / "contracts" / "proof_judge.py").read_text().replace("\r\n", "\n").strip()
+    mirrored_source = (ROOT / "frontend" / "public" / "deployed-contract-source.txt").read_text().replace("\r\n", "\n").strip()
+    assert mirrored_source == contract_source
+
+
+def test_frontend_never_presents_cached_verdict_as_live_state():
+    page = (ROOT / "frontend" / "app" / "page.tsx").read_text()
+    assert "showing the pinned verified outcomes" not in page
+    assert "verifiedJob ||" not in page
+    assert "verifiedRefundJob ||" not in page
+    assert "no cached verdict is shown" in page
