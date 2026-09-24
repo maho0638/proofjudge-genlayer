@@ -136,7 +136,7 @@ def test_proofjudge_live_economic_outcomes(default_account, accounts):
     # Outcome B: irrelevant evidence is rejected, then sponsor gets refund.
     # ------------------------------------------------------------------
     refund_job_id = "irrelevant-evidence-refund-v1"
-    refund_deadline = int(time.time()) + 420
+    refund_deadline = int(time.time()) + 90
 
     create_refund_tx = sponsor.create_job(
         args=[
