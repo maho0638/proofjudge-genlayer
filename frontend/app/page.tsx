@@ -407,6 +407,7 @@ export default function Home() {
           <span><b>ProofJudge</b><small>CONSENSUS MILESTONE ESCROW</small></span>
         </a>
         <div className="navLinks">
+          <a href="#review">Review</a>
           <a href="#agreements">Agreements</a>
           <a href="#proof">Live proof</a>
           <a href="#workspace">Workspace</a>
@@ -463,6 +464,30 @@ export default function Home() {
         <article><span className="featureIcon">◎</span><div><b>Escrow before work</b><p>The sponsor cannot create an agreement without locking a positive native GEN reward.</p></div></article>
         <article><span className="featureIcon">↗</span><div><b>Independent proof</b><p>The deliverable and corroborating evidence must use separate HTTPS hostnames.</p></div></article>
         <article><span className="featureIcon">✦</span><div><b>Consensus before payout</b><p>Validators independently fetch and judge the same evidence before claim becomes possible.</p></div></article>
+      </section>
+
+      <section className="reviewFastTrack" id="review">
+        <div className="reviewIntro">
+          <div>
+            <p className="kicker">REVIEWER FAST TRACK</p>
+            <h2>Audit the product in under a minute.</h2>
+            <p>
+              No wallet, seeded UI state or private dashboard is required. Every claim below
+              links to a live contract read, finalized Studionet transaction, reproducible CI
+              workflow or settlement-critical source file.
+            </p>
+          </div>
+          <div className="reviewOutcomeStack">
+            <div className="outcomeChip paid"><small>GOOD EVIDENCE</small><b>98/100 → PAID</b><span>contractor claimed GEN</span></div>
+            <div className="outcomeChip refunded"><small>BAD EVIDENCE</small><b>2/100 → REFUNDED</b><span>contractor payout stayed locked</span></div>
+          </div>
+        </div>
+        <div className="reviewLinks">
+          <a href="#proof"><span>01</span><div><b>Read two live outcomes</b><small>12 contract checks · no wallet</small></div><i>↓</i></a>
+          <a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer"><span>02</span><div><b>Inspect Studionet contract</b><small>escrow · resolve · payout · refund</small></div><i>↗</i></a>
+          <a href={verifiedDemo.workflow} target="_blank" rel="noreferrer"><span>03</span><div><b>Reproduce both paths</b><small>fresh deployment in CI</small></div><i>↗</i></a>
+          <a href="/verified-demo.json" target="_blank" rel="noreferrer"><span>04</span><div><b>Open machine proof</b><small>canonical IDs · results · tx hashes</small></div><i>↗</i></a>
+        </div>
       </section>
 
       <section className="section" id="agreements">
@@ -755,9 +780,33 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="section readiness">
+        <div className="sectionHead">
+          <div>
+            <p className="kicker">PRODUCTION-STYLE READINESS</p>
+            <h2>Not a verdict demo.<br />A complete settlement product.</h2>
+          </div>
+          <p>ProofJudge covers the product states a real bilateral milestone needs, including the failure path reviewers usually cannot verify in demos.</p>
+        </div>
+        <div className="readinessGrid">
+          <article><small>SPONSOR</small><b>Precommit the deal</b><p>Assigned contractor, requirement, rubric, deadline and native GEN are committed before evidence exists.</p></article>
+          <article><small>CONTRACTOR</small><b>Prove completion</b><p>Only the assigned wallet may submit two independently hosted public evidence sources.</p></article>
+          <article><small>CONSENSUS</small><b>Adjudicate live evidence</b><p>Validators independently re-fetch and re-evaluate instead of trusting a frontend verdict.</p></article>
+          <article><small>ECONOMICS</small><b>Settle both outcomes</b><p>Approval opens contractor claim; rejection never opens payout and expired failed work can return escrow.</p></article>
+          <article><small>SAFETY</small><b>Bound retries and time</b><p>Three-attempt cap, deadline ceiling, confidence threshold and unresolved-submission refund guard reduce gaming.</p></article>
+          <article><small>AUDIT</small><b>Reviewer can verify</b><p>On-chain index, timestamps, policy version, Explorer lifecycle, CI reproduction and machine-readable proof are public.</p></article>
+        </div>
+        <div className="sourceRail">
+          <a href="https://github.com/maho0638/proofjudge-genlayer/blob/main/contracts/proof_judge.py" target="_blank" rel="noreferrer">Intelligent Contract ↗</a>
+          <a href="https://github.com/maho0638/proofjudge-genlayer/blob/main/docs/STEWARD_VERIFICATION.md" target="_blank" rel="noreferrer">Steward guide ↗</a>
+          <a href="https://github.com/maho0638/proofjudge-genlayer/blob/main/docs/SECURITY.md" target="_blank" rel="noreferrer">Security model ↗</a>
+          <a href="https://github.com/maho0638/proofjudge-genlayer/blob/main/docs/QUALITY_BAR.md" target="_blank" rel="noreferrer">Quality mapping ↗</a>
+        </div>
+      </section>
+
       <footer className="footer">
         <div className="brand"><img className="brandLogo" src="/proofjudge-logo.png" alt="ProofJudge logo" /><span><b>ProofJudge</b><small>EVIDENCE-BASED MILESTONE SETTLEMENT</small></span></div>
-        <div><a href="https://github.com/maho0638/proofjudge-genlayer" target="_blank">GitHub ↗</a><a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank">GenLayer Explorer ↗</a></div>
+        <div><span className="footerVersion">v3 · PJ_V3_MINCONF70</span><a href="/verified-demo.json" target="_blank">Proof JSON ↗</a><a href="https://github.com/maho0638/proofjudge-genlayer" target="_blank">GitHub ↗</a><a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank">GenLayer Explorer ↗</a></div>
       </footer>
     </main>
   );
