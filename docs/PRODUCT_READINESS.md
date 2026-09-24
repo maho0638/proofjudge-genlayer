@@ -70,3 +70,18 @@ Bad-evidence path:
 ## Product boundary
 
 ProofJudge is bilateral settlement for one assigned contractor. It intentionally does not perform multi-entrant winner selection.
+
+
+## Steward-requested v4 hardening
+
+- [x] Evidence mutation protection with normalized on-chain primary/support snapshots
+- [x] Exact validator equality for reason code, evidence basis and snapshots
+- [x] Explicit SOURCE_UNAVAILABLE and CONTRADICTORY_EVIDENCE failure paths
+- [x] One-shot sponsor/contractor challenge with fresh consensus
+- [x] Claim blocked while CHALLENGED
+- [x] 24-hour resolution grace before stalled SUBMITTED/CHALLENGED refund
+- [x] Insufficient-balance, unauthorized claim/refund, early refund and double-claim tests
+- [x] Canonical frontend/docs/proof address consistency test
+- [x] Explicit `npm --prefix frontend run build` CI gate
+- [x] Post-deploy source equality attestation using GenLayer `getContractCode`
+- [x] Reviewer UI does not substitute cached verdicts when live RPC fails

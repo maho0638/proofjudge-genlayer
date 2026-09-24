@@ -20,9 +20,9 @@ The contract uses:
 - `@gl.public.write.payable` and `gl.message.value` for native GEN escrow;
 - GenLayer native value transfer for contractor payout and sponsor refund.
 
-The validator does not merely validate JSON shape. It independently re-fetches the evidence and repeats the judgment. This follows GenLayer's current Equivalence Principle guidance: https://docs.genlayer.com/developers/intelligent-contracts/equivalence-principle
+The validator does not merely validate JSON shape. It independently re-fetches the evidence and repeats the judgment. V4 additionally requires exact equality for the reason code, evidence basis and normalized evidence snapshots; changed web content therefore fails validator equivalence instead of silently inheriting the leader's decision. This follows GenLayer's current Equivalence Principle guidance: https://docs.genlayer.com/developers/intelligent-contracts/equivalence-principle
 
-## V3 settlement policy
+## V4 settlement policy
 
 The current contract hardens the economic decision:
 
@@ -33,9 +33,13 @@ The current contract hardens the economic decision:
 - a zero-address contractor is rejected;
 - agreement deadlines cannot exceed 365 days;
 - rejected evidence may be retried, but attempts are capped at three;
-- submitted evidence cannot be bypassed by sponsor refund;
-- creation, submission, resolution and settlement timestamps are stored on-chain;
-- every job records `policy_version = PJ_V3_MINCONF70`.
+- leader and validators must match the exact decision reason, evidence basis and normalized evidence snapshots;
+- normalized primary/support snapshots are stored on-chain so later URL changes cannot rewrite what was judged;
+- missing sources fail closed as `SOURCE_UNAVAILABLE`, while material contradictions use `CONTRADICTORY_EVIDENCE`;
+- sponsor or contractor may challenge one resolved decision and force fresh consensus before settlement;
+- submitted/challenged work cannot be immediately bypassed by refund; a 24-hour post-deadline resolution grace prevents permanent lock;
+- creation, submission, resolution, challenge and settlement timestamps are stored on-chain;
+- every job records `policy_version = PJ_V4_SNAPSHOT_CHALLENGE`.
 
 ## Product lifecycle
 
@@ -47,7 +51,7 @@ The current contract hardens the economic decision:
 6. **Retry** — rejected work may replace evidence before the deadline, up to three attempts.
 7. **Refund** — expired OPEN or REJECTED work can be refunded only by the sponsor.
 
-## Verified Studionet v3
+## Verified Studionet v4
 
 - **Network:** GenLayer Studionet
 - **Chain ID:** 61999
@@ -57,7 +61,7 @@ The current contract hardens the economic decision:
 
 ### Outcome A — real production milestone → PAID
 
-Job: `proofjudge-production-milestone-v3`
+Job: `proofjudge-production-milestone-v4`
 
 The primary evidence was the real ProofJudge production deployment and the independent support was the public repository README.
 
@@ -108,14 +112,16 @@ The production Next.js app includes:
 - role-aware payout and refund controls;
 - on-chain policy and lifecycle timestamps;
 - finalized transaction activity with Explorer links;
-- a walletless reviewer benchmark;
-- a **12-check live integrity gate** covering both PAID and REFUNDED outcomes.
+- a walletless reviewer benchmark with no cached-verdict fallback;
+- deployment-source provenance checking via the exact source passed to the GenLayer test deployer;
+- on-chain evidence snapshots and challenge state;
+- a **live integrity gate** covering contract address, deployed source and both PAID/REFUNDED outcomes.
 
 ## Automated quality gates
 
 CI verifies:
 
-- **16 direct contract tests**;
+- **expanded direct and repository-safety tests**;
 - adversarial validator disagreement;
 - low-confidence approval denial;
 - authorization and source-domain guards;

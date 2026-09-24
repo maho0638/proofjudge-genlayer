@@ -1,6 +1,8 @@
 """Live Studionet verification: real release payout + rejected evidence + sponsor refund."""
 
+import hashlib
 import time
+from pathlib import Path
 
 import pytest
 from gltest import get_contract_factory
@@ -17,7 +19,13 @@ def _field(value, name):
 def test_proofjudge_live_economic_outcomes(default_account, accounts):
     assert len(accounts) >= 2
 
-    factory = get_contract_factory("ProofJudge")
+    factory = get_contract_factory(contract_file_path="contracts/proof_judge.py")
+    local_source = Path("contracts/proof_judge.py").read_text()
+    assert factory.contract_code.replace("\r\n", "\n").strip() == local_source.replace("\r\n", "\n").strip()
+    source_sha256 = hashlib.sha256(local_source.encode("utf-8")).hexdigest()
+    print("PROOFJUDGE_DEPLOY_INPUT_MATCH=true", flush=True)
+    print(f"PROOFJUDGE_DEPLOY_SOURCE_SHA256={source_sha256}", flush=True)
+
     contract = factory.deploy(
         account=default_account,
         consensus_max_rotations=2,
@@ -128,7 +136,7 @@ def test_proofjudge_live_economic_outcomes(default_account, accounts):
     # Outcome B: irrelevant evidence is rejected, then sponsor gets refund.
     # ------------------------------------------------------------------
     refund_job_id = "irrelevant-evidence-refund-v1"
-    refund_deadline = int(time.time()) + 420
+    refund_deadline = int(time.time()) + 90
 
     create_refund_tx = sponsor.create_job(
         args=[
