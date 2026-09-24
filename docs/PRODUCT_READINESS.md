@@ -44,7 +44,7 @@ ProofJudge is a complete bilateral milestone-settlement prototype rather than a 
 - [x] finalized transaction activity
 - [x] walletless reviewer proof
 - [x] live dual-outcome integrity gate
-- [x] 16 direct tests
+- [x] 28 contract behavior tests plus repository consistency checks
 - [x] validator dissent test
 - [x] strict mocks
 - [x] storage pickling checks
@@ -56,16 +56,24 @@ ProofJudge is a complete bilateral milestone-settlement prototype rather than a 
 ## Canonical live proof
 
 Contract:
-`0x699f62FA0f53B92D85949B1F046f6B50209707eE`
+`0x76D61aAec5bD4625346858acCd6dAb39966c4247`
 
 Workflow:
-https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296
+https://github.com/maho0638/proofjudge-genlayer/actions/runs/35993240108
 
 Paid production milestone:
-`PAID · 98/100 · CROSS_CHECK`
+`PAID · 100/100 · CROSS_CHECK · INDEPENDENT_CORROBORATION`
 
 Bad-evidence path:
-`REJECTED · 2/100 · EVIDENCE_GAP → REFUNDED`
+`REJECTED · 95/100 rejection confidence · EVIDENCE_GAP → REFUNDED`
+
+## Deployment provenance
+
+Canonical deployed/repository normalized SHA-256:
+
+`0cba1187b5478d885f8c150e1597298d4bc550b7552a01862c43eaeaa4f79ca9`
+
+The successful live workflow reads the source back from `0x76D61aAec5bD4625346858acCd6dAb39966c4247` and proves it equals the repository contract source.
 
 ## Product boundary
 
@@ -83,5 +91,5 @@ ProofJudge is bilateral settlement for one assigned contractor. It intentionally
 - [x] Insufficient-balance, unauthorized claim/refund, early refund and double-claim tests
 - [x] Canonical frontend/docs/proof address consistency test
 - [x] Explicit `npm --prefix frontend run build` CI gate
-- [x] Post-deploy source equality attestation using GenLayer `getContractCode`
+- [x] Post-deploy source equality attestation using GenLayer `getContractCode` (`DEPLOYED_SOURCE_MATCH=true`)
 - [x] Reviewer UI does not substitute cached verdicts when live RPC fails
