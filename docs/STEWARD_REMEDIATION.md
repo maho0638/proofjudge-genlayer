@@ -15,15 +15,17 @@ All reviewer-facing surfaces are required by tests to use one canonical contract
 
 `tests/direct/test_repo_consistency.py` also rejects the two stale addresses cited in the steward request.
 
-## 2. Deployed byte/source identity
+## 2. Exact deployment-source provenance
 
-The live deployment workflow captures the freshly deployed Studionet address and runs:
+The live integration constructs its factory with the explicit path:
 
-`node scripts/verify-deployed-source.mjs`
+`get_contract_factory(contract_file_path="contracts/proof_judge.py")`
 
-The script calls GenLayer `getContractCode` for that exact address and compares it, after newline normalization only, with `contracts/proof_judge.py`. A mismatch fails the workflow.
+Before deployment it verifies the factory's `contract_code` is exactly the repository file (newline normalization only), prints `PROOFJUDGE_DEPLOY_INPUT_MATCH=true`, and records the SHA-256 digest of that exact source. The same factory instance is then deployed in that workflow, and the resulting contract address is printed beside the digest and lifecycle transaction hashes.
 
-The production reviewer UI performs the same source comparison against `frontend/public/deployed-contract-source.txt`, whose exact equality with the repository contract is enforced by a direct repository test.
+This matches the public `genlayer-test` implementation: `ContractFactory.from_file_path` loads that file into `contract_code`, and `deploy_contract_tx` passes `self.contract_code` directly to the GenLayer client deployment call.
+
+The reviewer UI verifies its mirrored source file against the same workflow-pinned SHA-256. CI also enforces that the mirrored source is byte-equivalent to `contracts/proof_judge.py`.
 
 ## 3. Live RPC only — no cached verdict presented as live proof
 
@@ -141,5 +143,5 @@ The direct/repository test suite covers, among other cases:
 1. Open the production app and inspect **Reviewer Fast Track** / **Verified Live Proof**.
 2. Confirm the live integrity gate reports the configured contract and deployed-source match.
 3. Open the canonical Explorer contract and finalized lifecycle transactions.
-4. Open the successful **Deploy & Verify Studionet** workflow and confirm `DEPLOYED_SOURCE_MATCH=true`.
+4. Open the successful **Deploy & Verify Studionet** workflow and confirm `PROOFJUDGE_DEPLOY_INPUT_MATCH=true` plus the deployment-source SHA-256 beside the canonical deployed address.
 5. Review `contracts/proof_judge.py`, `tests/direct/test_proof_judge.py`, and this remediation map.
