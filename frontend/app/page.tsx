@@ -699,7 +699,7 @@ export default function Home() {
       <section className="section workspaceSection" id="workspace">
         <div className="sectionHead">
           <div><p className="kicker">PROTOCOL WORKSPACE</p><h2>Run the full agreement lifecycle.</h2><p>Every write is sent directly to the Intelligent Contract and waits for GenLayer finalization before the UI reports success.</p></div>
-          <div className="notice"><i /> {notice}</div>
+          <div className="notice" role="status" aria-live="polite"><i /> {notice}</div>
         </div>
 
         <div className="workspace">
@@ -721,7 +721,7 @@ export default function Home() {
                   <label className="wide">Acceptance requirement<textarea value={requirement} onChange={(e) => setRequirement(e.target.value)} placeholder="Describe exactly what must be delivered…" /></label>
                   <label className="wide">Precommitted rubric<textarea value={rubric} onChange={(e) => setRubric(e.target.value)} placeholder="Define what evidence counts, what must be direct, and what should cause rejection…" /></label>
                 </div>
-                <div className="formFooter"><span>GEN is escrowed when this transaction finalizes.</span><button disabled={!!busy}>{busy === "create" ? "Creating…" : "Lock GEN & create"}</button></div>
+                <div className="formFooter"><span>Clicking opens your EIP-1193 wallet. GEN is locked only after wallet approval and GenLayer finalization.</span><button type="submit" disabled={!!busy}>{busy === "create" ? "Creating…" : "Lock GEN & create"}</button></div>
               </form>
             )}
 
@@ -738,7 +738,7 @@ export default function Home() {
                   <span className={validHttps(supportUrl) ? "ok" : ""}>HTTPS support</span>
                   <span className={host(evidenceUrl) && host(supportUrl) && host(evidenceUrl) !== host(supportUrl) ? "ok" : ""}>Distinct domains</span>
                 </div>
-                <div className="formFooter"><span>Evidence is judged from the live public web.</span><button disabled={!!busy}>{busy === "submit" ? "Submitting…" : "Submit evidence"}</button></div>
+                <div className="formFooter"><span>Evidence is judged from the live public web.</span><button type="submit" disabled={!!busy}>{busy === "submit" ? "Submitting…" : "Submit evidence"}</button></div>
               </form>
             )}
 
