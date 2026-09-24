@@ -113,7 +113,7 @@ The production Next.js app includes:
 - on-chain policy and lifecycle timestamps;
 - finalized transaction activity with Explorer links;
 - a walletless reviewer benchmark with no cached-verdict fallback;
-- live deployed-source equality checking via `getContractCode`;
+- deployment-source provenance checking via the exact source passed to the GenLayer test deployer;
 - on-chain evidence snapshots and challenge state;
 - a **live integrity gate** covering contract address, deployed source and both PAID/REFUNDED outcomes.
 
