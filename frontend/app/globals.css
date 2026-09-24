@@ -306,3 +306,144 @@ button:disabled{opacity:.38;cursor:not-allowed}
 @media(max-width:760px){
   .brandLogo{width:40px;height:40px}
 }
+
+.marketSummary{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin:-4px 0 18px;
+}
+.marketSummary>div{
+  display:grid;
+  gap:5px;
+  padding:14px 16px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:rgba(9,14,22,.72);
+}
+.marketSummary small{
+  font-size:9px;
+  color:#708095;
+  text-transform:uppercase;
+  letter-spacing:.11em;
+}
+.marketSummary b{
+  font-size:19px;
+  color:#dfe9f7;
+}
+
+.roleBar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:0 0 14px;
+  padding:10px 12px;
+  border:1px solid #223148;
+  border-radius:12px;
+  background:#080e16;
+  font-size:10px;
+  color:#7f8da0;
+}
+.roleBar span{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+.roleBar i{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 12px rgba(102,232,255,.38);
+}
+.roleBar b{
+  margin-left:auto;
+  color:#e6edf7;
+}
+.roleBar code{
+  color:#7d91aa;
+}
+
+.activityPanel{
+  margin-top:14px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:linear-gradient(180deg,#0b1119,#080d14);
+  overflow:hidden;
+}
+.activityHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  padding:16px 18px;
+  border-bottom:1px solid var(--line);
+}
+.activityHead>div{
+  display:grid;
+  gap:4px;
+}
+.activityHead small{
+  font-size:8px;
+  color:var(--cyan);
+  letter-spacing:.15em;
+}
+.activityHead b{
+  font-size:13px;
+}
+.activityHead>span{
+  font-size:10px;
+  color:#75849a;
+}
+.activityList{
+  display:grid;
+}
+.activityList a{
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  gap:14px;
+  align-items:center;
+  padding:13px 18px;
+  border-bottom:1px solid #182333;
+}
+.activityList a:last-child{
+  border-bottom:0;
+}
+.activityList a:hover{
+  background:#0d1621;
+}
+.activityList div{
+  display:grid;
+  gap:3px;
+}
+.activityList b{
+  font-size:11px;
+}
+.activityList small,
+.activityList code{
+  font-size:9px;
+  color:#718198;
+}
+.activityList span{
+  color:var(--cyan);
+  font-size:10px;
+}
+.activityEmpty{
+  margin:0;
+  padding:18px;
+  color:#718096;
+  font-size:11px;
+}
+
+@media(max-width:760px){
+  .marketSummary{grid-template-columns:1fr 1fr}
+  .roleBar{flex-wrap:wrap}
+  .roleBar b{margin-left:0}
+  .activityList a{grid-template-columns:1fr auto}
+  .activityList code{display:none}
+}
+@media(max-width:520px){
+  .marketSummary{grid-template-columns:1fr}
+}

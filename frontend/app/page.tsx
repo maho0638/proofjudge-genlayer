@@ -26,6 +26,17 @@ type JobView = {
   reason_code?: string;
   rationale?: string;
   reward_claimed?: boolean;
+  created_at?: string | number | bigint;
+  submitted_at?: string | number | bigint;
+  resolved_at?: string | number | bigint;
+  settled_at?: string | number | bigint;
+  policy_version?: string;
+};
+
+type ActivityItem = {
+  label: string;
+  hash: string;
+  jobId: string;
 };
 
 const explorerBase = "https://explorer-studio.genlayer.com";
@@ -110,6 +121,11 @@ export default function Home() {
 
   const [settlementId, setSettlementId] = useState(verifiedDemo.jobId);
   const [loadedJob, setLoadedJob] = useState<JobView | null>(null);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+
+  function recordActivity(label: string, hash: string, id: string) {
+    setActivity((items) => [{ label, hash, jobId: id }, ...items].slice(0, 6));
+  }
 
   async function connectWallet() {
     try {
@@ -227,6 +243,7 @@ export default function Home() {
         value: parseGen(reward),
       });
       setNotice(`Escrow created: ${short(hash)}`);
+      recordActivity("Create escrow", hash, jobId.trim());
       setSettlementId(jobId.trim());
       await refreshAfterWrite(jobId.trim());
       setWorkspace("settlement");
@@ -256,6 +273,7 @@ export default function Home() {
         args: [submitJobId.trim(), evidenceUrl.trim(), supportUrl.trim()],
       });
       setNotice(`Evidence submitted: ${short(hash)}`);
+      recordActivity("Submit evidence", hash, submitJobId.trim());
       setSettlementId(submitJobId.trim());
       await refreshAfterWrite(submitJobId.trim());
       setWorkspace("settlement");
@@ -283,7 +301,14 @@ export default function Home() {
         functionName: action,
         args: [settlementId.trim()],
       });
+      const activityLabel =
+        action === "resolve_job"
+          ? "Resolve consensus"
+          : action === "claim_payment"
+            ? "Claim payment"
+            : "Refund expired";
       setNotice(`${action.replace("_", " ")} finalized: ${short(hash)}`);
+      recordActivity(activityLabel, hash, settlementId.trim());
       await refreshAfterWrite(settlementId.trim());
     } catch (error: any) {
       setNotice(error?.message || "Transaction failed");
@@ -319,6 +344,21 @@ export default function Home() {
   const integrityPassed = integrityChecks.filter(([, passed]) => passed).length;
   const integrityComplete =
     verifiedProofState === "live" && integrityPassed === integrityChecks.length;
+
+  const normalizedAccount = account.toLowerCase();
+  const sponsorAddress = String(loadedJob?.sponsor || "").toLowerCase();
+  const contractorAddress = String(loadedJob?.contractor || "").toLowerCase();
+  const connectedRole =
+    !normalizedAccount
+      ? "Wallet not connected"
+      : normalizedAccount === sponsorAddress
+        ? "Sponsor"
+        : normalizedAccount === contractorAddress
+          ? "Assigned contractor"
+          : "Observer";
+  const paidCount = jobs.filter((job) => job.status === "PAID").length;
+  const refundedCount = jobs.filter((job) => job.status === "REFUNDED").length;
+  const pendingCount = jobs.filter((job) => !["PAID", "REFUNDED"].includes(String(job.status))).length;
 
   return (
     <main>
@@ -362,7 +402,7 @@ export default function Home() {
             <div><img className="protocolLogo" src="/proofjudge-logo.png" alt="" aria-hidden="true" /><div><small>PROOFJUDGE PROTOCOL</small><b>Evidence-backed payout</b></div></div>
             <span className="chainBadge">61999</span>
           </div>
-          <div className="protocolLive"><i /> STUDIONET OPERATIONAL <b>GEN</b></div>
+          <div className="protocolLive"><i /> {verifiedProofState === "live" ? "STUDIONET VERIFIED" : verifiedProofState === "error" ? "RPC CHECK DEGRADED" : "VERIFYING STUDIONET"} <b>GEN</b></div>
           <div className="protocolSteps">
             <div><span>01</span><b>Lock escrow</b><small>Sponsor commits value</small></div>
             <div><span>02</span><b>Submit proof</b><small>Contractor provides evidence</small></div>
@@ -390,6 +430,12 @@ export default function Home() {
         <div className="sectionHead">
           <div><p className="kicker">ON-CHAIN DISCOVERY</p><h2>Milestone agreements,<br />indexed by the contract.</h2></div>
           <div className="healthPill"><i /> {marketState}</div>
+        </div>
+        <div className="marketSummary">
+          <div><small>Indexed</small><b>{jobs.length}</b></div>
+          <div><small>Paid</small><b>{paidCount}</b></div>
+          <div><small>Refunded</small><b>{refundedCount}</b></div>
+          <div><small>Active / unresolved</small><b>{pendingCount}</b></div>
         </div>
         <div className="marketGrid">
           {jobs.length ? jobs.map((job) => (
@@ -510,12 +556,33 @@ export default function Home() {
             {workspace === "settlement" && (
               <div>
                 <div className="panelTitle"><span>03</span><div><h3>Judge and settle</h3><p>Resolution is permissionless. Payout and refund remain role-gated by the contract.</p></div></div>
+                <div className="roleBar">
+                  <span><i /> Connected role</span>
+                  <b>{connectedRole}</b>
+                  {account && <code>{short(account)}</code>}
+                </div>
                 <div className="settleControls">
                   <label>Job ID<input value={settlementId} onChange={(e) => setSettlementId(e.target.value)} /></label>
                   <button className="secondaryBtn" onClick={() => loadJob()} disabled={!!busy}>{busy === "read" ? "Reading…" : "Read state"}</button>
                   <button onClick={() => settle("resolve_job")} disabled={!!busy || loadedJob?.status !== "SUBMITTED"}>{busy === "resolve_job" ? "Resolving…" : "Resolve by consensus"}</button>
-                  <button className="secondaryBtn" onClick={() => settle("claim_payment")} disabled={!!busy || loadedJob?.status !== "APPROVED"}>{busy === "claim_payment" ? "Claiming…" : "Claim payment"}</button>
-                  <button className="secondaryBtn" onClick={() => settle("refund_expired")} disabled={!!busy || !["OPEN", "REJECTED"].includes(String(loadedJob?.status))}>{busy === "refund_expired" ? "Refunding…" : "Refund expired"}</button>
+                  <button
+                    className="secondaryBtn"
+                    onClick={() => settle("claim_payment")}
+                    disabled={
+                      !!busy ||
+                      loadedJob?.status !== "APPROVED" ||
+                      (!!account && normalizedAccount !== contractorAddress)
+                    }
+                  >{busy === "claim_payment" ? "Claiming…" : "Claim payment"}</button>
+                  <button
+                    className="secondaryBtn"
+                    onClick={() => settle("refund_expired")}
+                    disabled={
+                      !!busy ||
+                      !["OPEN", "REJECTED"].includes(String(loadedJob?.status)) ||
+                      (!!account && normalizedAccount !== sponsorAddress)
+                    }
+                  >{busy === "refund_expired" ? "Refunding…" : "Refund expired"}</button>
                 </div>
                 {loadedJob ? (
                   <div className="loadedState">
@@ -528,6 +595,11 @@ export default function Home() {
                       <div><small>Confidence</small><b>{Number(loadedJob.confidence ?? 0)}/100</b></div>
                       <div><small>Deadline</small><b>{deadlineText(loadedJob.deadline)}</b></div>
                       <div><small>Reward claimed</small><b>{loadedJob.reward_claimed ? "Yes" : "No"}</b></div>
+                      <div><small>Policy</small><b>{loadedJob.policy_version || "Legacy"}</b></div>
+                      <div><small>Created</small><b>{deadlineText(loadedJob.created_at)}</b></div>
+                      <div><small>Submitted</small><b>{deadlineText(loadedJob.submitted_at)}</b></div>
+                      <div><small>Resolved</small><b>{deadlineText(loadedJob.resolved_at)}</b></div>
+                      <div><small>Settled</small><b>{deadlineText(loadedJob.settled_at)}</b></div>
                     </div>
                     {loadedJob.rationale && <blockquote>{loadedJob.rationale}</blockquote>}
                   </div>
@@ -535,6 +607,25 @@ export default function Home() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="activityPanel">
+          <div className="activityHead">
+            <div><small>FINALIZED WRITE ACTIVITY</small><b>Explorer-verifiable transaction trail</b></div>
+            <span>{activity.length ? `${activity.length} recent` : "No writes in this session"}</span>
+          </div>
+          {activity.length ? (
+            <div className="activityList">
+              {activity.map((item) => (
+                <a key={item.hash} href={`${explorerBase}/tx/${item.hash}`} target="_blank" rel="noreferrer">
+                  <div><b>{item.label}</b><small>{item.jobId}</small></div>
+                  <code>{short(item.hash)}</code><span>Explorer ↗</span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="activityEmpty">Create, submit, resolve, claim or refund from this workspace and the finalized transaction will appear here.</p>
+          )}
         </div>
       </section>
 
