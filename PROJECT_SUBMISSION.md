@@ -22,7 +22,7 @@ The sponsor commits:
 
 The contractor submits a public deliverable URL and an independent support URL. The Intelligent Contract fetches both live. A leader proposes a structured decision; validators independently re-fetch and re-evaluate the evidence. The accepted result changes contract state and therefore who can withdraw the escrow.
 
-V3 adds an explicit **70/100 minimum approval threshold**, safe failure on unavailable evidence, lifecycle timestamps, retry limits and a policy version stored with every agreement.
+V4 adds an explicit **70/100 minimum approval threshold**, bounded on-chain evidence snapshots, exact validator equivalence over reason + evidence basis + snapshots, explicit unavailable/contradictory evidence failures, one-shot party challenges, stalled-resolution refund grace, lifecycle timestamps, retry limits and a policy version stored with every agreement.
 
 ## Verified live Studionet deployment
 
@@ -33,7 +33,7 @@ V3 adds an explicit **70/100 minimum approval threshold**, safe failure on unava
 
 ### Live outcome 1: production ProofJudge release
 
-`proofjudge-production-milestone-v3`
+`proofjudge-production-milestone-v4`
 
 Real production page + independent repository evidence was judged:
 
@@ -73,13 +73,13 @@ The production UI supports the full lifecycle:
 - audit timestamps and policy version;
 - finalized transaction activity;
 - walletless live reviewer proof;
-- 12-check integrity gate over both economic outcomes.
+- live integrity gate over both economic outcomes.
 
 ## Verification and engineering quality
 
 The repository includes:
 
-- 16 direct contract tests;
+- expanded direct and repository-safety tests;
 - strict mocks and stored-state pickling checks;
 - explicit validator-disagreement testing;
 - GenVM lint/validation;
