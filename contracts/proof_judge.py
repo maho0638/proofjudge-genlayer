@@ -5,8 +5,11 @@ from datetime import datetime, timezone
 from genlayer import *
 
 MAX_ATTEMPTS = 3
+MAX_CHALLENGES = 1
 MIN_APPROVAL_CONFIDENCE = 70
 MAX_DEADLINE_SECONDS = 365 * 24 * 60 * 60
+RESOLUTION_GRACE_SECONDS = 24 * 60 * 60
+SNAPSHOT_LIMIT = 700
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 APPROVAL_REASONS = (
@@ -18,8 +21,22 @@ APPROVAL_REASONS = (
 FAILURE_REASONS = (
     "EVIDENCE_GAP",
     "SOURCE_UNAVAILABLE",
+    "CONTRADICTORY_EVIDENCE",
 )
 ALLOWED_REASONS = APPROVAL_REASONS + FAILURE_REASONS
+
+APPROVAL_BASES = (
+    "PRIMARY_DIRECT",
+    "RUBRIC_MATCH",
+    "AUTHORITATIVE_PRIMARY",
+    "INDEPENDENT_CORROBORATION",
+)
+FAILURE_BASES = (
+    "MISSING_EVIDENCE",
+    "SOURCE_UNAVAILABLE",
+    "CONTRADICTORY_EVIDENCE",
+)
+ALLOWED_BASES = APPROVAL_BASES + FAILURE_BASES
 
 
 @gl.evm.contract_interface
@@ -47,11 +64,17 @@ class Job:
     attempt_count: u256
     confidence: u256
     reason_code: str
+    evidence_basis: str
+    primary_snapshot: str
+    support_snapshot: str
     rationale: str
     reward_claimed: bool
+    challenge_count: u256
+    challenge_note: str
     created_at: u256
     submitted_at: u256
     resolved_at: u256
+    challenged_at: u256
     settled_at: u256
     policy_version: str
 
@@ -73,32 +96,53 @@ class ProofJudge(gl.Contract):
             host = host[4:]
         return host
 
+    def _snapshot(self, text: str) -> str:
+        return " ".join(str(text).split())[:SNAPSHOT_LIMIT]
+
     def _normalize_verdict(self, result: dict) -> dict:
         approved = bool(result.get("approved", False))
         confidence = max(0, min(100, int(result.get("confidence", 0))))
         reason_code = str(result.get("reason_code", "EVIDENCE_GAP")).upper()
+        evidence_basis = str(result.get("evidence_basis", "MISSING_EVIDENCE")).upper()
+        primary_snapshot = self._snapshot(result.get("primary_snapshot", ""))
+        support_snapshot = self._snapshot(result.get("support_snapshot", ""))
 
         if reason_code not in ALLOWED_REASONS:
             reason_code = "EVIDENCE_GAP"
             approved = False
-
-        # Failure reasons can never unlock funds.
-        if reason_code in FAILURE_REASONS:
+        if evidence_basis not in ALLOWED_BASES:
+            evidence_basis = "MISSING_EVIDENCE"
             approved = False
 
-        # A low-confidence "yes" is not economically actionable.
+        if reason_code in FAILURE_REASONS or evidence_basis in FAILURE_BASES:
+            approved = False
+
         if approved and confidence < MIN_APPROVAL_CONFIDENCE:
             approved = False
             reason_code = "EVIDENCE_GAP"
+            evidence_basis = "MISSING_EVIDENCE"
 
-        # Keep rejection metadata semantically consistent.
-        if not approved and reason_code in APPROVAL_REASONS:
+        if approved and (
+            reason_code not in APPROVAL_REASONS
+            or evidence_basis not in APPROVAL_BASES
+        ):
+            approved = False
             reason_code = "EVIDENCE_GAP"
+            evidence_basis = "MISSING_EVIDENCE"
+
+        if not approved:
+            if reason_code in APPROVAL_REASONS:
+                reason_code = "EVIDENCE_GAP"
+            if evidence_basis in APPROVAL_BASES:
+                evidence_basis = "MISSING_EVIDENCE"
 
         return {
             "approved": approved,
             "confidence": confidence,
             "reason_code": reason_code,
+            "evidence_basis": evidence_basis,
+            "primary_snapshot": primary_snapshot,
+            "support_snapshot": support_snapshot,
         }
 
     def _evaluate(
@@ -110,14 +154,26 @@ class ProofJudge(gl.Contract):
     ) -> dict:
         def leader_fn() -> dict:
             try:
-                evidence = gl.nondet.web.render(evidence_url, mode="text")[:5000]
-                support = gl.nondet.web.render(support_url, mode="text")[:3500]
+                evidence = gl.nondet.web.render(evidence_url, mode="text")
             except Exception:
-                return {
+                evidence = ""
+            try:
+                support = gl.nondet.web.render(support_url, mode="text")
+            except Exception:
+                support = ""
+
+            primary_snapshot = self._snapshot(evidence)
+            support_snapshot = self._snapshot(support)
+
+            if not primary_snapshot or not support_snapshot:
+                return self._normalize_verdict({
                     "approved": False,
                     "confidence": 100,
                     "reason_code": "SOURCE_UNAVAILABLE",
-                }
+                    "evidence_basis": "SOURCE_UNAVAILABLE",
+                    "primary_snapshot": primary_snapshot,
+                    "support_snapshot": support_snapshot,
+                })
 
             prompt = f"""
 You are the neutral settlement judge for a milestone escrow.
@@ -135,37 +191,48 @@ PRECOMMITTED RUBRIC:
 PRIMARY EVIDENCE URL:
 {evidence_url}
 
-PRIMARY EVIDENCE:
-{evidence}
+PRIMARY EVIDENCE SNAPSHOT:
+{primary_snapshot}
 
 INDEPENDENT SUPPORT URL:
 {support_url}
 
-INDEPENDENT SUPPORT:
-{support}
+INDEPENDENT SUPPORT SNAPSHOT:
+{support_snapshot}
 
 Decide whether the submitted milestone clearly satisfies the requirement under
-the precommitted rubric.
+the precommitted rubric. Explicitly reject materially contradictory evidence.
 
 Choose exactly one reason code:
-- DIRECT_EVIDENCE: the primary evidence directly proves completion
-- REQUIREMENT_FIT: the deliverable satisfies the stated acceptance criteria
-- SOURCE_AUTHORITY: authoritative evidence is the decisive factor
-- CROSS_CHECK: independent support corroborates the primary evidence
-- EVIDENCE_GAP: evidence is missing, ambiguous, contradictory, or insufficient
+- DIRECT_EVIDENCE
+- REQUIREMENT_FIT
+- SOURCE_AUTHORITY
+- CROSS_CHECK
+- EVIDENCE_GAP
+- CONTRADICTORY_EVIDENCE
+
+Choose exactly one evidence basis:
+- PRIMARY_DIRECT
+- RUBRIC_MATCH
+- AUTHORITATIVE_PRIMARY
+- INDEPENDENT_CORROBORATION
+- MISSING_EVIDENCE
+- CONTRADICTORY_EVIDENCE
 
 Approval is economically actionable only when confidence is at least
-{MIN_APPROVAL_CONFIDENCE}/100. If the evidence does not clearly meet that bar,
-return approved=false.
+{MIN_APPROVAL_CONFIDENCE}/100.
 
-Return JSON only with every field present:
+Return JSON only:
 {{
   "approved": true or false,
   "confidence": integer from 0 to 100,
-  "reason_code": "one allowed reason code"
+  "reason_code": "one allowed reason code",
+  "evidence_basis": "one allowed evidence basis"
 }}
 """
             result = gl.nondet.exec_prompt(prompt, response_format="json")
+            result["primary_snapshot"] = primary_snapshot
+            result["support_snapshot"] = support_snapshot
             return self._normalize_verdict(result)
 
         def validator_fn(leader_result) -> bool:
@@ -178,28 +245,69 @@ Return JSON only with every field present:
 
                 if leader["approved"] != validator["approved"]:
                     return False
+                if leader["reason_code"] != validator["reason_code"]:
+                    return False
+                if leader["evidence_basis"] != validator["evidence_basis"]:
+                    return False
+                if leader["primary_snapshot"] != validator["primary_snapshot"]:
+                    return False
+                if leader["support_snapshot"] != validator["support_snapshot"]:
+                    return False
 
                 leader_conf = int(leader["confidence"])
                 validator_conf = int(validator["confidence"])
-                if abs(leader_conf - validator_conf) > 15:
+                if abs(leader_conf - validator_conf) > 10:
                     return False
 
                 if leader["approved"]:
                     return (
                         leader["reason_code"] in APPROVAL_REASONS
-                        and validator["reason_code"] in APPROVAL_REASONS
+                        and leader["evidence_basis"] in APPROVAL_BASES
                         and leader_conf >= MIN_APPROVAL_CONFIDENCE
                         and validator_conf >= MIN_APPROVAL_CONFIDENCE
                     )
 
                 return (
                     leader["reason_code"] in FAILURE_REASONS
-                    and validator["reason_code"] in FAILURE_REASONS
+                    and leader["evidence_basis"] in FAILURE_BASES
                 )
             except Exception:
                 return False
 
         return gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
+
+    def _apply_verdict(self, job: Job, verdict: dict) -> None:
+        approved = bool(verdict.get("approved", False))
+        confidence = max(0, min(100, int(verdict.get("confidence", 0))))
+        reason_code = str(verdict.get("reason_code", "EVIDENCE_GAP"))
+        evidence_basis = str(verdict.get("evidence_basis", "MISSING_EVIDENCE"))
+
+        reason_text = {
+            "DIRECT_EVIDENCE": "the primary evidence directly proves completion",
+            "REQUIREMENT_FIT": "the deliverable satisfies the precommitted acceptance criteria",
+            "SOURCE_AUTHORITY": "authoritative evidence supports the completion claim",
+            "CROSS_CHECK": "independent support corroborates the primary evidence",
+            "EVIDENCE_GAP": "the submitted evidence is insufficient or ambiguous",
+            "SOURCE_UNAVAILABLE": "one or more public evidence sources could not be fetched",
+            "CONTRADICTORY_EVIDENCE": "the public evidence materially contradicts the completion claim",
+        }
+
+        job.status = "APPROVED" if approved else "REJECTED"
+        job.confidence = u256(confidence)
+        job.reason_code = reason_code
+        job.evidence_basis = evidence_basis
+        job.primary_snapshot = self._snapshot(verdict.get("primary_snapshot", ""))
+        job.support_snapshot = self._snapshot(verdict.get("support_snapshot", ""))
+        job.rationale = (
+            ("Approved because " if approved else "Rejected because ")
+            + reason_text.get(reason_code, "the evidence did not satisfy the rubric")
+            + ". Evidence basis "
+            + evidence_basis
+            + ". Confidence "
+            + str(confidence)
+            + "/100."
+        )[:420]
+        job.resolved_at = u256(self._now())
 
     @gl.public.write.payable
     def create_job(
@@ -260,13 +368,19 @@ Return JSON only with every field present:
             attempt_count=u256(0),
             confidence=u256(0),
             reason_code="",
+            evidence_basis="",
+            primary_snapshot="",
+            support_snapshot="",
             rationale="",
             reward_claimed=False,
+            challenge_count=u256(0),
+            challenge_note="",
             created_at=u256(now),
             submitted_at=u256(0),
             resolved_at=u256(0),
+            challenged_at=u256(0),
             settled_at=u256(0),
-            policy_version="PJ_V3_MINCONF70",
+            policy_version="PJ_V4_SNAPSHOT_CHALLENGE",
         )
 
     @gl.public.write
@@ -307,7 +421,12 @@ Return JSON only with every field present:
         job.attempt_count = u256(int(job.attempt_count) + 1)
         job.confidence = u256(0)
         job.reason_code = ""
+        job.evidence_basis = ""
+        job.primary_snapshot = ""
+        job.support_snapshot = ""
         job.rationale = ""
+        job.challenge_note = ""
+        job.challenged_at = u256(0)
         job.submitted_at = u256(self._now())
         job.resolved_at = u256(0)
         job.status = "SUBMITTED"
@@ -327,31 +446,48 @@ Return JSON only with every field present:
             str(job.evidence_url),
             str(job.support_url),
         )
+        self._apply_verdict(job, verdict)
 
-        approved = bool(verdict.get("approved", False))
-        confidence = max(0, min(100, int(verdict.get("confidence", 0))))
-        reason_code = str(verdict.get("reason_code", "EVIDENCE_GAP"))
+    @gl.public.write
+    def challenge_resolution(self, job_id: str, note: str) -> None:
+        if job_id not in self.jobs:
+            raise gl.vm.UserError("Job not found")
 
-        reason_text = {
-            "DIRECT_EVIDENCE": "the primary evidence directly proves completion",
-            "REQUIREMENT_FIT": "the deliverable satisfies the precommitted acceptance criteria",
-            "SOURCE_AUTHORITY": "authoritative evidence supports the completion claim",
-            "CROSS_CHECK": "independent support corroborates the primary evidence",
-            "EVIDENCE_GAP": "the submitted evidence is insufficient or ambiguous",
-            "SOURCE_UNAVAILABLE": "one or more public evidence sources could not be fetched",
-        }
+        job = self.jobs[job_id]
+        if gl.message.sender_address not in (job.sponsor, job.contractor):
+            raise gl.vm.UserError("Only sponsor or contractor can challenge")
+        if job.status not in ("APPROVED", "REJECTED"):
+            raise gl.vm.UserError("Only a resolved decision can be challenged")
+        if int(job.challenge_count) >= MAX_CHALLENGES:
+            raise gl.vm.UserError("Maximum challenges reached")
 
-        job.status = "APPROVED" if approved else "REJECTED"
-        job.confidence = u256(confidence)
-        job.reason_code = reason_code
-        job.rationale = (
-            ("Approved because " if approved else "Rejected because ")
-            + reason_text.get(reason_code, "the evidence did not satisfy the rubric")
-            + ". Confidence "
-            + str(confidence)
-            + "/100."
-        )[:300]
-        job.resolved_at = u256(self._now())
+        note = note.strip()
+        if len(note) < 20:
+            raise gl.vm.UserError("Challenge note must explain the dispute")
+        if len(note) > 500:
+            raise gl.vm.UserError("Challenge note too long")
+
+        job.challenge_count = u256(int(job.challenge_count) + 1)
+        job.challenge_note = note
+        job.challenged_at = u256(self._now())
+        job.status = "CHALLENGED"
+
+    @gl.public.write
+    def resolve_challenge(self, job_id: str) -> None:
+        if job_id not in self.jobs:
+            raise gl.vm.UserError("Job not found")
+
+        job = self.jobs[job_id]
+        if job.status != "CHALLENGED":
+            raise gl.vm.UserError("Job is not challenged")
+
+        verdict = self._evaluate(
+            str(job.requirement),
+            str(job.rubric),
+            str(job.evidence_url),
+            str(job.support_url),
+        )
+        self._apply_verdict(job, verdict)
 
     @gl.public.write
     def claim_payment(self, job_id: str) -> u256:
@@ -385,21 +521,25 @@ Return JSON only with every field present:
         job = self.jobs[job_id]
         if gl.message.sender_address != job.sponsor:
             raise gl.vm.UserError("Only the sponsor can refund")
-        if self._now() <= int(job.deadline):
+        now = self._now()
+        if now <= int(job.deadline):
             raise gl.vm.UserError("Wait for the deadline")
         if job.reward_claimed:
             raise gl.vm.UserError("Reward already settled")
-        if job.status == "SUBMITTED":
-            raise gl.vm.UserError("Submitted evidence must be resolved")
-        if job.status not in ("OPEN", "REJECTED"):
+
+        if job.status in ("SUBMITTED", "CHALLENGED"):
+            if now <= int(job.deadline) + RESOLUTION_GRACE_SECONDS:
+                raise gl.vm.UserError("Resolution grace period has not elapsed")
+        elif job.status not in ("OPEN", "REJECTED"):
             raise gl.vm.UserError("Job cannot be refunded")
+
         if self.balance < job.reward:
             raise gl.vm.UserError("Contract balance is insufficient")
 
         reward = job.reward
         job.reward_claimed = True
         job.status = "REFUNDED"
-        job.settled_at = u256(self._now())
+        job.settled_at = u256(now)
         _Recipient(job.sponsor).emit_transfer(value=reward)
         return reward
 

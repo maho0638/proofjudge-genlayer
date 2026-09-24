@@ -33,7 +33,7 @@ def test_proofjudge_live_economic_outcomes(default_account, accounts):
     # ------------------------------------------------------------------
     # Outcome A: a real ProofJudge production release is approved and paid.
     # ------------------------------------------------------------------
-    paid_job_id = "proofjudge-production-milestone-v3"
+    paid_job_id = "proofjudge-production-milestone-v4"
     paid_deadline = int(time.time()) + 3600
 
     create_paid_tx = sponsor.create_job(
@@ -98,7 +98,15 @@ def test_proofjudge_live_economic_outcomes(default_account, accounts):
         "SOURCE_AUTHORITY",
         "CROSS_CHECK",
     }
-    assert str(_field(approved, "policy_version")) == "PJ_V3_MINCONF70"
+    assert str(_field(approved, "policy_version")) == "PJ_V4_SNAPSHOT_CHALLENGE"
+    assert str(_field(approved, "evidence_basis")) in {
+        "PRIMARY_DIRECT",
+        "RUBRIC_MATCH",
+        "AUTHORITATIVE_PRIMARY",
+        "INDEPENDENT_CORROBORATION",
+    }
+    assert len(str(_field(approved, "primary_snapshot"))) > 0
+    assert len(str(_field(approved, "support_snapshot"))) > 0
     assert int(_field(approved, "created_at")) > 0
     assert int(_field(approved, "submitted_at")) > 0
     assert int(_field(approved, "resolved_at")) > 0
