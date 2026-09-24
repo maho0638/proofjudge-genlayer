@@ -490,55 +490,118 @@ export default function Home() {
 
       <section className="section proofSection" id="proof">
         <div className="sectionHead proofTitle">
-          <div><p className="kicker">VERIFIED LIVE PROOF</p><h2>A real milestone paid<br />after consensus.</h2><p>No wallet is required to audit this benchmark. The page reads the stored job directly from the deployed Intelligent Contract.</p></div>
-          <a className="outlineLink" href={verifiedDemo.workflow} target="_blank">Open verification workflow ↗</a>
+          <div>
+            <p className="kicker">VERIFIED LIVE PROOF</p>
+            <h2>Correct work gets paid.<br />Bad evidence does not.</h2>
+            <p>
+              No wallet is required to audit these two real Studionet outcomes. The same
+              Intelligent Contract paid a verified ProofJudge production milestone and
+              rejected irrelevant evidence before returning that escrow to the sponsor.
+            </p>
+          </div>
+          <a className="outlineLink" href={verifiedDemo.workflow} target="_blank" rel="noreferrer">Open verification workflow ↗</a>
         </div>
 
         <div className={`systemStatus ${verifiedProofState === "live" ? "good" : ""}`}>
           <i />
           {verifiedProofState === "live"
-            ? "Live RPC read verified from the deployed contract"
+            ? "Two live contract outcomes verified directly from Studionet"
             : verifiedProofState === "error"
-              ? "Live RPC unavailable — showing the last verified settlement snapshot; use Explorer and CI proof to audit it"
-              : "Verifying canonical settlement from Studionet…"}
+              ? "Live RPC unavailable — showing the pinned verified outcomes; use Explorer and CI proof to audit them"
+              : "Verifying paid and refunded outcomes from Studionet…"}
         </div>
 
         <div className={`integrityPanel ${integrityComplete ? "pass" : verifiedProofState === "error" ? "fallback" : ""}`}>
           <div className="integrityTop">
-            <div><small>REVIEWER INTEGRITY GATE</small><strong>{verifiedProofState === "live" ? `${integrityPassed}/${integrityChecks.length} live checks match` : verifiedProofState === "error" ? "Snapshot shown — live checks unavailable" : "Checking live settlement integrity…"}</strong></div>
+            <div>
+              <small>REVIEWER INTEGRITY GATE</small>
+              <strong>
+                {verifiedProofState === "live"
+                  ? `${integrityPassed}/${integrityChecks.length} live checks match`
+                  : verifiedProofState === "error"
+                    ? "Pinned proof shown — live checks unavailable"
+                    : "Checking both economic outcomes…"}
+              </strong>
+            </div>
             <b>{integrityComplete ? "PASS" : verifiedProofState === "error" ? "FALLBACK" : "VERIFYING"}</b>
           </div>
           <div className="integrityChecks">
             {integrityChecks.map(([label, passed]) => (
-              <div key={label}><i className={verifiedProofState === "live" && passed ? "ok" : ""} /><span>{label}</span><b>{verifiedProofState === "live" ? (passed ? "MATCH" : "MISMATCH") : "—"}</b></div>
+              <div key={label}>
+                <i className={verifiedProofState === "live" && passed ? "ok" : ""} />
+                <span>{label}</span>
+                <b>{verifiedProofState === "live" ? (passed ? "MATCH" : "MISMATCH") : "—"}</b>
+              </div>
             ))}
           </div>
         </div>
 
         <div className="proofGrid">
           <article className="settlementCard">
-            <div className="cardTitle"><span><i /> Consensus settlement</span><a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank">Contract ↗</a></div>
+            <div className="cardTitle">
+              <span><i /> Outcome A · production release</span>
+              <a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer">Contract ↗</a>
+            </div>
             <div className="settlementStats">
               <div><small>Job</small><b>{canonicalJob?.id || "Loading…"}</b></div>
               <div><small>Status</small><b>{canonicalJob?.status || "Loading…"}</b></div>
               <div><small>Confidence</small><b>{canonicalJob ? `${Number(canonicalJob.confidence ?? 0)}/100` : "Loading…"}</b></div>
               <div><small>Stored reason</small><b>{canonicalJob?.reason_code || "Loading…"}</b></div>
               <div><small>Reward claimed</small><b>{canonicalJob ? (canonicalJob.reward_claimed ? "Yes" : "No") : "Loading…"}</b></div>
-              <div><small>Attempts</small><b>{canonicalJob ? Number(canonicalJob.attempt_count ?? 0) : "…"}</b></div>
+              <div><small>Policy</small><b>{canonicalJob?.policy_version || "Loading…"}</b></div>
             </div>
             <blockquote>{canonicalJob?.rationale || "Loading the verified settlement rationale…"}</blockquote>
             <div className="evidencePair">
-              <a href={String(canonicalJob?.evidence_url || verifiedDemo.expected.evidence_url)} target="_blank"><small>PRIMARY EVIDENCE</small><b>{host(String(canonicalJob?.evidence_url || verifiedDemo.expected.evidence_url))}</b><span>Open ↗</span></a>
-              <a href={String(canonicalJob?.support_url || verifiedDemo.expected.support_url)} target="_blank"><small>INDEPENDENT SUPPORT</small><b>{host(String(canonicalJob?.support_url || verifiedDemo.expected.support_url))}</b><span>Open ↗</span></a>
+              <a href={String(canonicalJob?.evidence_url || verifiedDemo.expected.evidence_url)} target="_blank" rel="noreferrer">
+                <small>LIVE PRODUCTION DELIVERABLE</small>
+                <b>{host(String(canonicalJob?.evidence_url || verifiedDemo.expected.evidence_url))}</b><span>Open ↗</span>
+              </a>
+              <a href={String(canonicalJob?.support_url || verifiedDemo.expected.support_url)} target="_blank" rel="noreferrer">
+                <small>INDEPENDENT REPOSITORY SUPPORT</small>
+                <b>{host(String(canonicalJob?.support_url || verifiedDemo.expected.support_url))}</b><span>Open ↗</span>
+              </a>
             </div>
           </article>
 
           <article className="txCard">
-            <div className="cardTitle"><span>Settlement lifecycle</span><small>Explorer proof</small></div>
+            <div className="cardTitle"><span>Paid lifecycle</span><small>4 finalized transactions</small></div>
             <div className="txList">
               {verifiedDemo.transactions.map(([label, hash], index) => (
-                <a key={hash} href={`${explorerBase}/tx/${hash}`} target="_blank">
-                  <span>{String(index + 1).padStart(2, "0")}</span><div><b>{label}</b><code>{short(hash)}</code></div><i>↗</i>
+                <a key={hash} href={`${explorerBase}/tx/${hash}`} target="_blank" rel="noreferrer">
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <div><b>{label}</b><code>{short(hash)}</code></div><i>↗</i>
+                </a>
+              ))}
+            </div>
+          </article>
+
+          <article className="settlementCard refundCard">
+            <div className="cardTitle">
+              <span><i /> Outcome B · bad evidence</span>
+              <small>Payout blocked → sponsor refunded</small>
+            </div>
+            <div className="settlementStats">
+              <div><small>Job</small><b>{canonicalRefund?.id || "Loading…"}</b></div>
+              <div><small>Final status</small><b>{canonicalRefund?.status || "Loading…"}</b></div>
+              <div><small>Decision confidence</small><b>{canonicalRefund ? `${Number(canonicalRefund.confidence ?? 0)}/100` : "Loading…"}</b></div>
+              <div><small>Stored reason</small><b>{canonicalRefund?.reason_code || "Loading…"}</b></div>
+              <div><small>Escrow settled</small><b>{canonicalRefund ? (canonicalRefund.reward_claimed ? "Yes" : "No") : "Loading…"}</b></div>
+              <div><small>Policy</small><b>{canonicalRefund?.policy_version || "Loading…"}</b></div>
+            </div>
+            <blockquote>{canonicalRefund?.rationale || "Loading the rejected-evidence rationale…"}</blockquote>
+            <div className="outcomeNote">
+              <b>Economic safety proved</b>
+              <span>Consensus rejected irrelevant evidence at 2/100. Contractor payout never opened; after deadline the sponsor recovered the escrow.</span>
+            </div>
+          </article>
+
+          <article className="txCard">
+            <div className="cardTitle"><span>Reject + refund lifecycle</span><small>4 finalized transactions</small></div>
+            <div className="txList">
+              {verifiedDemo.refund.transactions.map(([label, hash], index) => (
+                <a key={hash} href={`${explorerBase}/tx/${hash}`} target="_blank" rel="noreferrer">
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <div><b>{label}</b><code>{short(hash)}</code></div><i>↗</i>
                 </a>
               ))}
             </div>
