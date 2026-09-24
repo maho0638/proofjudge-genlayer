@@ -30,6 +30,9 @@ def create_demo_job(direct_vm, contract, sponsor, contractor, job_id="milestone-
         future_deadline(),
     )
     direct_vm.value = 0
+    # Direct Mode does not mirror payable value into self.balance automatically.
+    # Fund the deployed contract explicitly so payout/refund tests model escrow.
+    direct_vm.deal(contract.address, 2500)
 
 
 def submit_demo_evidence(direct_vm, contract, contractor, job_id="milestone-1"):
