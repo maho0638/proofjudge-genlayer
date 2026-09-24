@@ -27,7 +27,7 @@ Validators independently repeat live retrieval and judgment.
 Acceptance requires:
 
 - exact agreement on approved/rejected;
-- confidence values within a 15-point tolerance;
+- confidence values within a 10-point tolerance;
 - semantically valid positive/failure reason families;
 - both leader and validator confidence ≥70 for an approval.
 
@@ -72,10 +72,15 @@ Current policy: `PJ_V4_SNAPSHOT_CHALLENGE`.
 
 ## Verified adverse path
 
-The live Studionet workflow intentionally submitted irrelevant evidence. Consensus rejected it at 2/100 with `EVIDENCE_GAP`; contractor payout did not open; after deadline the sponsor recovered escrow.
+The canonical live Studionet workflow intentionally submitted irrelevant evidence. Consensus rejected it with 95/100 rejection confidence and `EVIDENCE_GAP`; contractor payout did not open; after deadline the sponsor recovered escrow.
+
+Canonical contract:
+`0x76D61aAec5bD4625346858acCd6dAb39966c4247`
 
 Workflow:
-https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296
+https://github.com/maho0638/proofjudge-genlayer/actions/runs/35993240108
+
+The same workflow reads the deployed contract source back from Studionet and proves `DEPLOYED_SOURCE_MATCH=true` against repository `contracts/proof_judge.py`.
 
 ProofJudge remains a Studionet prototype, not legal arbitration or a production financial service.
 

@@ -18,7 +18,8 @@ jobs:
           EXPECT="Correct work gets paid."
 
           for attempt in $(seq 1 30); do
-            if curl -fsSL --retry 2 --connect-timeout 10 "$URL" -o /tmp/proofjudge.html               && grep -Fq "$EXPECT" /tmp/proofjudge.html; then
+            if curl -fsSL --retry 2 --connect-timeout 10 "$URL" -o /tmp/proofjudge.html \
+              && grep -Fq "$EXPECT" /tmp/proofjudge.html; then
               echo "Production release marker found on attempt $attempt"
               exit 0
             fi
@@ -29,11 +30,13 @@ jobs:
           echo "Expected production release marker was not served"
           exit 1
 
-      - name: Verify machine-readable live proof
+      - name: Verify machine-readable canonical V4 proof
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsSL --retry 3             "https://proofjudge-genlayer-frontend.vercel.app/verified-demo.json"             -o /tmp/verified-demo.json
+          curl -fsSL --retry 3 \
+            "https://proofjudge-genlayer-frontend.vercel.app/verified-demo.json" \
+            -o /tmp/verified-demo.json
 
           python - <<'PY'
           import json
@@ -43,31 +46,41 @@ jobs:
 
           assert proof["network"] == "GenLayer Studionet"
           assert proof["chainId"] == 61999
-          assert proof["contract"].lower() == "0x699f62fa0f53b92d85949b1f046f6b50209707ee"
+          assert proof["contract"].lower() == "0x76d61aaec5bd4625346858accd6dab39966c4247"
+          assert proof["workflow"] == "https://github.com/maho0638/proofjudge-genlayer/actions/runs/35993240108"
+
+          source = proof["source"]
+          assert source["deployedSourceMatch"] is True
+          assert source["deployedNormalizedSha256"] == "0cba1187b5478d885f8c150e1597298d4bc550b7552a01862c43eaeaa4f79ca9"
+          assert source["repositoryNormalizedSha256"] == source["deployedNormalizedSha256"]
 
           paid = proof["paidOutcome"]
-          assert paid["jobId"] == "proofjudge-production-milestone-v3"
+          assert paid["jobId"] == "proofjudge-production-milestone-v4"
           assert paid["expected"]["status"] == "PAID"
-          assert paid["expected"]["confidence"] == 98
+          assert paid["expected"]["confidence"] == 100
           assert paid["expected"]["reasonCode"] == "CROSS_CHECK"
+          assert paid["expected"]["evidenceBasis"] == "INDEPENDENT_CORROBORATION"
           assert paid["expected"]["rewardClaimed"] is True
-          assert paid["expected"]["policyVersion"] == "PJ_V3_MINCONF70"
+          assert paid["expected"]["policyVersion"] == "PJ_V4_SNAPSHOT_CHALLENGE"
 
           refunded = proof["refundedOutcome"]
           assert refunded["jobId"] == "irrelevant-evidence-refund-v1"
           assert refunded["expected"]["status"] == "REFUNDED"
-          assert refunded["expected"]["rejectionConfidence"] == 2
+          assert refunded["expected"]["rejectionConfidence"] == 95
           assert refunded["expected"]["reasonCode"] == "EVIDENCE_GAP"
           assert refunded["expected"]["rewardSettled"] is True
+          assert refunded["expected"]["policyVersion"] == "PJ_V4_SNAPSHOT_CHALLENGE"
 
-          print("Canonical production proof manifest verified.")
+          print("Canonical V4 production proof manifest verified.")
           PY
 
       - name: Verify branded logo asset
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsSL --retry 3             "https://proofjudge-genlayer-frontend.vercel.app/proofjudge-logo.png"             -o /tmp/proofjudge-logo.png
+          curl -fsSL --retry 3 \
+            "https://proofjudge-genlayer-frontend.vercel.app/proofjudge-logo.png" \
+            -o /tmp/proofjudge-logo.png
 
           MAGIC="$(xxd -p -l 8 /tmp/proofjudge-logo.png)"
           test "$MAGIC" = "89504e470d0a1a0a"

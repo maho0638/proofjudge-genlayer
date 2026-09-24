@@ -26,10 +26,10 @@ V4 adds an explicit **70/100 minimum approval threshold**, bounded on-chain evid
 
 ## Verified live Studionet deployment
 
-- Contract: `0x699f62FA0f53B92D85949B1F046f6B50209707eE`
-- Explorer: https://explorer-studio.genlayer.com/address/0x699f62FA0f53B92D85949B1F046f6B50209707eE
+- Contract: `0x76D61aAec5bD4625346858acCd6dAb39966c4247`
+- Explorer: https://explorer-studio.genlayer.com/address/0x76D61aAec5bD4625346858acCd6dAb39966c4247
 - Live app: https://proofjudge-genlayer-frontend.vercel.app
-- Full verification workflow: https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296
+- Full verification workflow: https://github.com/maho0638/proofjudge-genlayer/actions/runs/35993240108
 
 ### Live outcome 1: production ProofJudge release
 
@@ -37,7 +37,7 @@ V4 adds an explicit **70/100 minimum approval threshold**, bounded on-chain evid
 
 Real production page + independent repository evidence was judged:
 
-`APPROVED · 98/100 · CROSS_CHECK → PAID`
+`APPROVED · 100/100 · CROSS_CHECK → PAID`
 
 The contractor then claimed the escrow.
 
@@ -47,7 +47,7 @@ The contractor then claimed the escrow.
 
 Unrelated evidence was judged:
 
-`REJECTED · 2/100 · EVIDENCE_GAP`
+`REJECTED · 95/100 rejection confidence · EVIDENCE_GAP`
 
 Contractor payout never opened. After the deadline the sponsor executed the guarded refund:
 
@@ -76,6 +76,8 @@ The production UI supports the full lifecycle:
 - live integrity gate over both economic outcomes.
 
 ## Verification and engineering quality
+
+The canonical successful workflow also proves `DEPLOYED_SOURCE_MATCH=true`: the deployed Studionet source and repository `contracts/proof_judge.py` normalize to SHA-256 `0cba1187b5478d885f8c150e1597298d4bc550b7552a01862c43eaeaa4f79ca9`.
 
 The repository includes:
 
