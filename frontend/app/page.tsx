@@ -24,11 +24,17 @@ type JobView = {
   attempt_count?: string | number | bigint;
   confidence?: string | number | bigint;
   reason_code?: string;
+  evidence_basis?: string;
+  primary_snapshot?: string;
+  support_snapshot?: string;
   rationale?: string;
   reward_claimed?: boolean;
+  challenge_count?: string | number | bigint;
+  challenge_note?: string;
   created_at?: string | number | bigint;
   submitted_at?: string | number | bigint;
   resolved_at?: string | number | bigint;
+  challenged_at?: string | number | bigint;
   settled_at?: string | number | bigint;
   policy_version?: string;
 };
@@ -49,13 +55,15 @@ const verifiedDemo = {
     status: "PAID",
     confidence: 98,
     reason_code: "CROSS_CHECK",
+    evidence_basis: "INDEPENDENT_CORROBORATION",
     reward_claimed: true,
+    challenge_count: 0,
     attempt_count: 1,
     evidence_url: "https://proofjudge-genlayer-frontend.vercel.app",
     support_url: "https://raw.githubusercontent.com/maho0638/proofjudge-genlayer/main/README.md",
     rationale:
       "Approved because independent support corroborates the primary evidence. Confidence 98/100.",
-    policy_version: "PJ_V3_MINCONF70",
+    policy_version: "PJ_V4_SNAPSHOT_CHALLENGE",
   } satisfies JobView,
   transactions: [
     ["Create escrow", "0xb9cdb9211b7775911b70e4af93b0408644c5d9ddafb0123d20fbcfc20dd62c9b"],
@@ -76,7 +84,7 @@ const verifiedDemo = {
       support_url: "https://www.iana.org/help/example-domains",
       rationale:
         "Rejected because the submitted evidence is insufficient or ambiguous. Confidence 2/100.",
-      policy_version: "PJ_V3_MINCONF70",
+      policy_version: "PJ_V4_SNAPSHOT_CHALLENGE",
     } satisfies JobView,
     transactions: [
       ["Create escrow", "0xd29492ee5f16e2d595b6792d17058c325ab0a9b4456cd7763eedfa2a01ebf637"],
@@ -129,6 +137,7 @@ export default function Home() {
   const [verifiedJob, setVerifiedJob] = useState<JobView | null>(null);
   const [verifiedRefundJob, setVerifiedRefundJob] = useState<JobView | null>(null);
   const [verifiedProofState, setVerifiedProofState] = useState<"loading" | "live" | "error">("loading");
+  const [sourceMatch, setSourceMatch] = useState<"loading" | "match" | "mismatch" | "error">("loading");
   const [jobs, setJobs] = useState<JobView[]>([]);
   const [marketState, setMarketState] = useState("Loading on-chain agreements…");
 
@@ -144,6 +153,7 @@ export default function Home() {
   const [supportUrl, setSupportUrl] = useState("");
 
   const [settlementId, setSettlementId] = useState(verifiedDemo.jobId);
+  const [challengeNote, setChallengeNote] = useState("");
   const [loadedJob, setLoadedJob] = useState<JobView | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
 
@@ -163,6 +173,7 @@ export default function Home() {
 
   async function loadVerified() {
     setVerifiedProofState("loading");
+    setSourceMatch("loading");
     try {
       const client: any = readClient();
       const paid: any = await client.readContract({
@@ -178,10 +189,28 @@ export default function Home() {
       setVerifiedJob(paid as JobView);
       setVerifiedRefundJob(refunded as JobView);
       setVerifiedProofState("live");
+
+      try {
+        const deployedSource: any = await client.getContractCode({ address: CONTRACT_ADDRESS });
+        const pinnedSource = await fetch("/deployed-contract-source.txt", { cache: "no-store" }).then((response) => {
+          if (!response.ok) throw new Error("Pinned source unavailable");
+          return response.text();
+        });
+        const normalizeSource = (value: unknown) =>
+          String(value ?? "").replace(/\r\n/g, "\n").trim();
+        setSourceMatch(
+          normalizeSource(deployedSource) === normalizeSource(pinnedSource)
+            ? "match"
+            : "mismatch"
+        );
+      } catch {
+        setSourceMatch("error");
+      }
     } catch {
       setVerifiedJob(null);
       setVerifiedRefundJob(null);
       setVerifiedProofState("error");
+      setSourceMatch("error");
     }
   }
 
@@ -316,13 +345,15 @@ export default function Home() {
     }
   }
 
-  async function settle(action: "resolve_job" | "claim_payment" | "refund_expired") {
+  async function settle(action: "resolve_job" | "resolve_challenge" | "claim_payment" | "refund_expired") {
     try {
       if (!settlementId.trim()) throw new Error("Job ID is required.");
       setBusy(action);
       const label =
         action === "resolve_job"
           ? "Running validator consensus…"
+          : action === "resolve_challenge"
+            ? "Re-running consensus for challenged decision…"
           : action === "claim_payment"
             ? "Claiming approved escrow…"
             : "Requesting guarded refund…";
@@ -336,6 +367,8 @@ export default function Home() {
       const activityLabel =
         action === "resolve_job"
           ? "Resolve consensus"
+          : action === "resolve_challenge"
+            ? "Resolve challenge"
           : action === "claim_payment"
             ? "Claim payment"
             : "Refund expired";
@@ -349,35 +382,58 @@ export default function Home() {
     }
   }
 
+  async function challengeResolution() {
+    try {
+      if (!settlementId.trim()) throw new Error("Job ID is required.");
+      if (challengeNote.trim().length < 20) {
+        throw new Error("Explain the challenge in at least 20 characters.");
+      }
+      setBusy("challenge_resolution");
+      setNotice("Submitting one-time settlement challenge…");
+      const hash = await sendWrite({
+        address: CONTRACT_ADDRESS,
+        functionName: "challenge_resolution",
+        args: [settlementId.trim(), challengeNote.trim()],
+      });
+      setNotice(`Challenge finalized: ${short(hash)}`);
+      recordActivity("Challenge decision", hash, settlementId.trim());
+      await refreshAfterWrite(settlementId.trim());
+    } catch (error: any) {
+      setNotice(error?.message || "Challenge failed");
+    } finally {
+      setBusy("");
+    }
+  }
+
   useEffect(() => {
     loadVerified();
     loadMarket();
     loadJob(verifiedDemo.jobId);
   }, []);
 
-  const canonicalJob =
-    verifiedJob || (verifiedProofState === "error" ? verifiedDemo.expected : null);
-  const canonicalRefund =
-    verifiedRefundJob ||
-    (verifiedProofState === "error" ? verifiedDemo.refund.expected : null);
+  const canonicalJob = verifiedJob;
+  const canonicalRefund = verifiedRefundJob;
 
   const integrityChecks = useMemo(
     () =>
       [
-        ["Contract", CONTRACT_ADDRESS.toLowerCase() === verifiedDemo.contract.toLowerCase()],
+        ["Contract address", CONTRACT_ADDRESS.toLowerCase() === verifiedDemo.contract.toLowerCase()],
+        ["Deployed source", sourceMatch === "match"],
         ["Paid job ID", canonicalJob?.id === verifiedDemo.expected.id],
         ["Paid status", canonicalJob?.status === "PAID"],
         ["Paid confidence", Number(canonicalJob?.confidence ?? -1) === 98],
         ["Paid reason", canonicalJob?.reason_code === "CROSS_CHECK"],
+        ["Evidence basis", canonicalJob?.evidence_basis === "INDEPENDENT_CORROBORATION"],
+        ["Evidence snapshots", Boolean(canonicalJob?.primary_snapshot) && Boolean(canonicalJob?.support_snapshot)],
         ["Paid reward", canonicalJob?.reward_claimed === true],
-        ["Policy v3", canonicalJob?.policy_version === "PJ_V3_MINCONF70"],
+        ["Policy v4", canonicalJob?.policy_version === "PJ_V4_SNAPSHOT_CHALLENGE"],
         ["Independent evidence", host(String(canonicalJob?.evidence_url ?? "")) !== host(String(canonicalJob?.support_url ?? ""))],
         ["Refund job ID", canonicalRefund?.id === verifiedDemo.refund.expected.id],
         ["Rejected evidence", Number(canonicalRefund?.confidence ?? -1) === 2 && canonicalRefund?.reason_code === "EVIDENCE_GAP"],
         ["Refunded status", canonicalRefund?.status === "REFUNDED"],
         ["Refund settled", canonicalRefund?.reward_claimed === true],
       ] as const,
-    [canonicalJob, canonicalRefund]
+    [canonicalJob, canonicalRefund, sourceMatch]
   );
 
   const integrityPassed = integrityChecks.filter(([, passed]) => passed).length;
@@ -532,7 +588,7 @@ export default function Home() {
           {verifiedProofState === "live"
             ? "Two live contract outcomes verified directly from Studionet"
             : verifiedProofState === "error"
-              ? "Live RPC unavailable — showing the pinned verified outcomes; use Explorer and CI proof to audit them"
+              ? "Live RPC unavailable — no cached verdict is shown; use Explorer and CI proof while live state is unavailable"
               : "Verifying paid and refunded outcomes from Studionet…"}
         </div>
 
@@ -544,7 +600,7 @@ export default function Home() {
                 {verifiedProofState === "live"
                   ? `${integrityPassed}/${integrityChecks.length} live checks match`
                   : verifiedProofState === "error"
-                    ? "Pinned proof shown — live checks unavailable"
+                    ? "Live state unavailable — cached verdict disabled"
                     : "Checking both economic outcomes…"}
               </strong>
             </div>
