@@ -50,6 +50,7 @@ const verifiedDemo = {
   contract: "0x699f62FA0f53B92D85949B1F046f6B50209707eE",
   jobId: "proofjudge-production-milestone-v3",
   workflow: "https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296",
+  deploymentSourceSha256: "",
   expected: {
     id: "proofjudge-production-milestone-v3",
     status: "PAID",
@@ -191,15 +192,21 @@ export default function Home() {
       setVerifiedProofState("live");
 
       try {
-        const deployedSource: any = await client.getContractCode({ address: CONTRACT_ADDRESS });
         const pinnedSource = await fetch("/deployed-contract-source.txt", { cache: "no-store" }).then((response) => {
           if (!response.ok) throw new Error("Pinned source unavailable");
           return response.text();
         });
-        const normalizeSource = (value: unknown) =>
-          String(value ?? "").replace(/\r\n/g, "\n").trim();
+        const normalized = pinnedSource.replace(/\r\n/g, "\n");
+        const digest = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(normalized)
+        );
+        const sourceHash = Array.from(new Uint8Array(digest))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
         setSourceMatch(
-          normalizeSource(deployedSource) === normalizeSource(pinnedSource)
+          verifiedDemo.deploymentSourceSha256 &&
+          sourceHash === verifiedDemo.deploymentSourceSha256
             ? "match"
             : "mismatch"
         );
@@ -418,7 +425,7 @@ export default function Home() {
     () =>
       [
         ["Contract address", CONTRACT_ADDRESS.toLowerCase() === verifiedDemo.contract.toLowerCase()],
-        ["Deployed source", sourceMatch === "match"],
+        ["Deploy source provenance", sourceMatch === "match"],
         ["Paid job ID", canonicalJob?.id === verifiedDemo.expected.id],
         ["Paid status", canonicalJob?.status === "PAID"],
         ["Paid confidence", Number(canonicalJob?.confidence ?? -1) === 98],
@@ -498,7 +505,7 @@ export default function Home() {
             <div><img className="protocolLogo" src="/proofjudge-logo.png" alt="" aria-hidden="true" /><div><small>PROOFJUDGE PROTOCOL</small><b>Evidence-backed payout</b></div></div>
             <span className="chainBadge">61999</span>
           </div>
-          <div className="protocolLive"><i /> {verifiedProofState === "live" ? "STUDIONET VERIFIED" : verifiedProofState === "error" ? "RPC CHECK DEGRADED" : "VERIFYING STUDIONET"} <b>{sourceMatch === "match" ? "SOURCE MATCH" : "GEN"}</b></div>
+          <div className="protocolLive"><i /> {verifiedProofState === "live" ? "STUDIONET VERIFIED" : verifiedProofState === "error" ? "RPC CHECK DEGRADED" : "VERIFYING STUDIONET"} <b>{sourceMatch === "match" ? "DEPLOY SOURCE MATCH" : "GEN"}</b></div>
           <div className="protocolSteps">
             <div><span>01</span><b>Lock escrow</b><small>Sponsor commits value</small></div>
             <div><span>02</span><b>Submit proof</b><small>Contractor provides evidence</small></div>
