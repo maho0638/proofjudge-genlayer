@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import verifiedDemoData from "../public/verified-demo.json";
 import {
   CONTRACT_ADDRESS,
   formatGen,
@@ -47,51 +48,47 @@ type ActivityItem = {
 
 const explorerBase = "https://explorer-studio.genlayer.com";
 const verifiedDemo = {
-  contract: "0x699f62FA0f53B92D85949B1F046f6B50209707eE",
-  jobId: "proofjudge-production-milestone-v3",
-  workflow: "https://github.com/maho0638/proofjudge-genlayer/actions/runs/35985412296",
-  deploymentSourceSha256: "",
+  contract: verifiedDemoData.contract,
+  jobId: verifiedDemoData.paidOutcome.jobId,
+  workflow: verifiedDemoData.workflow,
+  deploymentSourceSha256: verifiedDemoData.source.deployedNormalizedSha256,
   expected: {
-    id: "proofjudge-production-milestone-v3",
-    status: "PAID",
-    confidence: 98,
-    reason_code: "CROSS_CHECK",
-    evidence_basis: "INDEPENDENT_CORROBORATION",
-    reward_claimed: true,
-    challenge_count: 0,
-    attempt_count: 1,
-    evidence_url: "https://proofjudge-genlayer-frontend.vercel.app",
-    support_url: "https://raw.githubusercontent.com/maho0638/proofjudge-genlayer/main/README.md",
-    rationale:
-      "Approved because independent support corroborates the primary evidence. Confidence 98/100.",
-    policy_version: "PJ_V4_SNAPSHOT_CHALLENGE",
+    id: verifiedDemoData.paidOutcome.jobId,
+    status: verifiedDemoData.paidOutcome.expected.status,
+    confidence: verifiedDemoData.paidOutcome.expected.confidence,
+    reason_code: verifiedDemoData.paidOutcome.expected.reasonCode,
+    evidence_basis: verifiedDemoData.paidOutcome.expected.evidenceBasis,
+    reward_claimed: verifiedDemoData.paidOutcome.expected.rewardClaimed,
+    challenge_count: verifiedDemoData.paidOutcome.expected.challengeCount,
+    attempt_count: verifiedDemoData.paidOutcome.expected.attemptCount,
+    evidence_url: verifiedDemoData.paidOutcome.expected.evidenceUrl,
+    support_url: verifiedDemoData.paidOutcome.expected.supportUrl,
+    policy_version: verifiedDemoData.paidOutcome.expected.policyVersion,
   } satisfies JobView,
   transactions: [
-    ["Create escrow", "0xb9cdb9211b7775911b70e4af93b0408644c5d9ddafb0123d20fbcfc20dd62c9b"],
-    ["Submit evidence", "0x82e871f6510cf5e8af66e778a7b879e4a19d04f01c717103862d43bd5c19eb6d"],
-    ["Resolve consensus", "0x3fa02241eb60d23604ab3bde2d1eee9334794557f73af280f3ae3abdc2752bef"],
-    ["Claim payment", "0x8c98e573115a3a41a28456c59aa4eef1060ab1fdc713a69db74b50bd05d18013"],
+    ["Create escrow", verifiedDemoData.paidOutcome.transactions.create],
+    ["Submit evidence", verifiedDemoData.paidOutcome.transactions.submit],
+    ["Resolve consensus", verifiedDemoData.paidOutcome.transactions.resolve],
+    ["Claim payment", verifiedDemoData.paidOutcome.transactions.claim],
   ] as const,
   refund: {
-    jobId: "irrelevant-evidence-refund-v1",
+    jobId: verifiedDemoData.refundedOutcome.jobId,
     expected: {
-      id: "irrelevant-evidence-refund-v1",
-      status: "REFUNDED",
-      confidence: 2,
-      reason_code: "EVIDENCE_GAP",
-      reward_claimed: true,
-      attempt_count: 1,
-      evidence_url: "https://example.com",
-      support_url: "https://www.iana.org/help/example-domains",
-      rationale:
-        "Rejected because the submitted evidence is insufficient or ambiguous. Confidence 2/100.",
-      policy_version: "PJ_V4_SNAPSHOT_CHALLENGE",
+      id: verifiedDemoData.refundedOutcome.jobId,
+      status: verifiedDemoData.refundedOutcome.expected.status,
+      confidence: verifiedDemoData.refundedOutcome.expected.rejectionConfidence,
+      reason_code: verifiedDemoData.refundedOutcome.expected.reasonCode,
+      reward_claimed: verifiedDemoData.refundedOutcome.expected.rewardSettled,
+      attempt_count: verifiedDemoData.refundedOutcome.expected.attemptCount,
+      evidence_url: verifiedDemoData.refundedOutcome.expected.evidenceUrl,
+      support_url: verifiedDemoData.refundedOutcome.expected.supportUrl,
+      policy_version: verifiedDemoData.refundedOutcome.expected.policyVersion,
     } satisfies JobView,
     transactions: [
-      ["Create escrow", "0xd29492ee5f16e2d595b6792d17058c325ab0a9b4456cd7763eedfa2a01ebf637"],
-      ["Submit irrelevant evidence", "0xa790bb59991bd38e6e211cebcccba62fe2ea3870d1163cb1313d47dc7eeb18d0"],
-      ["Consensus rejects", "0xdab3ff727e806eda7b716290eececea0def16f2b5fd846cb1f29a89d21c86dfb"],
-      ["Sponsor refund", "0x794aabd5d29b0391503a969108342b96a350e654bcea8d9ad2831810d94f05dc"],
+      ["Create escrow", verifiedDemoData.refundedOutcome.transactions.create],
+      ["Submit irrelevant evidence", verifiedDemoData.refundedOutcome.transactions.submit],
+      ["Consensus rejects", verifiedDemoData.refundedOutcome.transactions.resolveReject],
+      ["Sponsor refund", verifiedDemoData.refundedOutcome.transactions.refund],
     ] as const,
   },
 };
@@ -196,7 +193,7 @@ export default function Home() {
           if (!response.ok) throw new Error("Pinned source unavailable");
           return response.text();
         });
-        const normalized = pinnedSource.replace(/\r\n/g, "\n");
+        const normalized = pinnedSource.replace(/\r\n/g, "\n").trim();
         const digest = await crypto.subtle.digest(
           "SHA-256",
           new TextEncoder().encode(normalized)
@@ -427,18 +424,18 @@ export default function Home() {
         ["Contract address", CONTRACT_ADDRESS.toLowerCase() === verifiedDemo.contract.toLowerCase()],
         ["Deploy source provenance", sourceMatch === "match"],
         ["Paid job ID", canonicalJob?.id === verifiedDemo.expected.id],
-        ["Paid status", canonicalJob?.status === "PAID"],
-        ["Paid confidence", Number(canonicalJob?.confidence ?? -1) === 98],
-        ["Paid reason", canonicalJob?.reason_code === "CROSS_CHECK"],
-        ["Evidence basis", canonicalJob?.evidence_basis === "INDEPENDENT_CORROBORATION"],
+        ["Paid status", canonicalJob?.status === verifiedDemo.expected.status],
+        ["Paid confidence", Number(canonicalJob?.confidence ?? -1) === Number(verifiedDemo.expected.confidence)],
+        ["Paid reason", canonicalJob?.reason_code === verifiedDemo.expected.reason_code],
+        ["Evidence basis", canonicalJob?.evidence_basis === verifiedDemo.expected.evidence_basis],
         ["Evidence snapshots", Boolean(canonicalJob?.primary_snapshot) && Boolean(canonicalJob?.support_snapshot)],
-        ["Paid reward", canonicalJob?.reward_claimed === true],
-        ["Policy v4", canonicalJob?.policy_version === "PJ_V4_SNAPSHOT_CHALLENGE"],
+        ["Paid reward", canonicalJob?.reward_claimed === verifiedDemo.expected.reward_claimed],
+        ["Policy v4", canonicalJob?.policy_version === verifiedDemo.expected.policy_version],
         ["Independent evidence", host(String(canonicalJob?.evidence_url ?? "")) !== host(String(canonicalJob?.support_url ?? ""))],
         ["Refund job ID", canonicalRefund?.id === verifiedDemo.refund.expected.id],
-        ["Rejected evidence", Number(canonicalRefund?.confidence ?? -1) === 2 && canonicalRefund?.reason_code === "EVIDENCE_GAP"],
-        ["Refunded status", canonicalRefund?.status === "REFUNDED"],
-        ["Refund settled", canonicalRefund?.reward_claimed === true],
+        ["Rejected evidence", Number(canonicalRefund?.confidence ?? -1) === Number(verifiedDemo.refund.expected.confidence) && canonicalRefund?.reason_code === verifiedDemo.refund.expected.reason_code],
+        ["Refunded status", canonicalRefund?.status === verifiedDemo.refund.expected.status],
+        ["Refund settled", canonicalRefund?.reward_claimed === verifiedDemo.refund.expected.reward_claimed],
       ] as const,
     [canonicalJob, canonicalRefund, sourceMatch]
   );
@@ -541,8 +538,8 @@ export default function Home() {
             </p>
           </div>
           <div className="reviewOutcomeStack">
-            <div className="outcomeChip paid"><small>GOOD EVIDENCE</small><b>98/100 → PAID</b><span>contractor claimed GEN</span></div>
-            <div className="outcomeChip refunded"><small>BAD EVIDENCE</small><b>2/100 → REFUNDED</b><span>contractor payout stayed locked</span></div>
+            <div className="outcomeChip paid"><small>GOOD EVIDENCE</small><b>{verifiedDemo.expected.confidence}/100 → PAID</b><span>contractor claimed GEN</span></div>
+            <div className="outcomeChip refunded"><small>BAD EVIDENCE</small><b>{verifiedDemo.refund.expected.confidence}/100 rejection → REFUNDED</b><span>contractor payout stayed locked</span></div>
           </div>
         </div>
         <div className="reviewLinks">
@@ -685,7 +682,7 @@ export default function Home() {
             <blockquote>{canonicalRefund?.rationale || "Loading the rejected-evidence rationale…"}</blockquote>
             <div className="outcomeNote">
               <b>Economic safety proved</b>
-              <span>Consensus rejected irrelevant evidence at 2/100. Contractor payout never opened; after deadline the sponsor recovered the escrow.</span>
+              <span>Consensus rejected irrelevant evidence with 95/100 rejection confidence. Contractor payout never opened; after deadline the sponsor recovered the escrow.</span>
             </div>
           </article>
 
