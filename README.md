@@ -156,3 +156,19 @@ The canonical successful workflow reports:
 - Product readiness: `docs/PRODUCT_READINESS.md`
 
 ProofJudge is a working Studionet prototype and not a production financial or legal arbitration service. Portal scoring remains a steward decision.
+
+
+## V5 milestone release candidate — composable project settlement
+
+The accepted V4 product settles one bilateral milestone safely. V5 expands ProofJudge into reusable project infrastructure:
+
+- ordered multi-milestone project chains with on-chain dependencies;
+- later stages locked until the previous milestone is actually `PAID`;
+- bounded project progress views and neutral participant settlement statistics;
+- a reusable TypeScript SDK for dApps and agents;
+- a dedicated developer integration surface;
+- a separate Studionet workflow proving a two-stage project end to end before V5 becomes canonical.
+
+See [docs/MILESTONE_V5.md](docs/MILESTONE_V5.md) and [sdk/](sdk/).
+
+V4 remains the canonical production contract until V5 live verification and deployed-source equality pass.

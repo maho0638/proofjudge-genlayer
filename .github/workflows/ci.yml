@@ -16,6 +16,17 @@ jobs:
       - run: pip install -r requirements.txt
       - run: pytest tests/direct -v
       - run: genvm-lint check contracts/proof_judge.py
+      - run: genvm-lint check contracts/proof_judge_v5.py
+
+  sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm --prefix sdk install
+      - run: npm --prefix sdk test
 
   frontend:
     runs-on: ubuntu-latest
