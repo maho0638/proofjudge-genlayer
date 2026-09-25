@@ -471,7 +471,7 @@ export default function Home() {
           <a href="#agreements">Agreements</a>
           <a href="#proof">Live proof</a>
           <a href="#workspace">Workspace</a>
-          <a href="#why">Why GenLayer</a>
+          <a href="#why">Why GenLayer</a>\n          <a href="/developers">Developers</a>
         </div>
         <button className="wallet" onClick={connectWallet}>
           <i />{account ? short(account) : "Connect wallet"}
@@ -894,13 +894,13 @@ export default function Home() {
           <a href="https://github.com/maho0638/proofjudge-genlayer/blob/main/contracts/proof_judge.py" target="_blank" rel="noreferrer">Intelligent Contract ↗</a>
           <a href="https://github.com/maho0638/proofjudge-genlayer/blob/main/docs/STEWARD_VERIFICATION.md" target="_blank" rel="noreferrer">Steward guide ↗</a>
           <a href="https://github.com/maho0638/proofjudge-genlayer/blob/main/docs/SECURITY.md" target="_blank" rel="noreferrer">Security model ↗</a>
-          <a href="https://github.com/maho0638/proofjudge-genlayer/blob/main/docs/QUALITY_BAR.md" target="_blank" rel="noreferrer">Quality mapping ↗</a>
+          <a href="https://github.com/maho0638/proofjudge-genlayer/blob/main/docs/QUALITY_BAR.md" target="_blank" rel="noreferrer">Quality mapping ↗</a>\n          <a href="/developers">Developer integration ↗</a>
         </div>
       </section>
 
       <footer className="footer">
         <div className="brand"><img className="brandLogo" src="/proofjudge-logo.png" alt="ProofJudge logo" /><span><b>ProofJudge</b><small>EVIDENCE-BASED MILESTONE SETTLEMENT</small></span></div>
-        <div><span className="footerVersion">v4 · PJ_V4_SNAPSHOT_CHALLENGE</span><a href="/verified-demo.json" target="_blank">Proof JSON ↗</a><a href="https://github.com/maho0638/proofjudge-genlayer" target="_blank">GitHub ↗</a><a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank">GenLayer Explorer ↗</a></div>
+        <div><span className="footerVersion">v4 · PJ_V4_SNAPSHOT_CHALLENGE</span><a href="/verified-demo.json" target="_blank">Proof JSON ↗</a><a href="https://github.com/maho0638/proofjudge-genlayer" target="_blank">GitHub ↗</a><a href={`${explorerBase}/address/${CONTRACT_ADDRESS}`} target="_blank">GenLayer Explorer ↗</a><a href="/developers">Developer SDK ↗</a></div>
       </footer>
     </main>
   );

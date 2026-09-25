@@ -1,0 +1,49 @@
+name: Deploy & Verify ProofJudge V5 Milestone
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy-v5-milestone.yml"
+      - "contracts/proof_judge_v5.py"
+      - "tests/integration/test_studionet_v5_milestone.py"
+      - "docs/MILESTONE_V5.md"
+      - "frontend/public/milestone-v5.txt"
+      - "scripts/verify-deployed-source.mjs"
+  workflow_dispatch:
+jobs:
+  composable-milestone-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: actions/setup-node@v4
+        with: {node-version: "24"}
+      - run: pip install -r requirements.txt
+      - run: npm install
+      - name: Wait for production V5 evidence marker
+        run: |
+          set -euo pipefail
+          URL="https://proofjudge-genlayer-frontend.vercel.app/milestone-v5.txt"
+          for attempt in $(seq 1 60); do
+            if curl -fsSL --retry 2 --connect-timeout 10 "$URL" -o /tmp/v5.txt && grep -q "PROOFJUDGE_V5_COMPOSABLE_MILESTONES" /tmp/v5.txt; then exit 0; fi
+            sleep 10
+          done
+          exit 1
+      - name: Deploy and execute two-stage V5 project
+        id: live
+        run: |
+          set -o pipefail
+          gltest tests/integration/test_studionet_v5_milestone.py -v -s --network studionet | tee /tmp/v5.log
+          grep -q 'PROOFJUDGE_V5_DEPLOY_INPUT_MATCH=true' /tmp/v5.log
+          grep -q 'PROOFJUDGE_V5_STAGE2_LOCKED_BEFORE_STAGE1_PAID=true' /tmp/v5.log
+          grep -q 'PROOFJUDGE_V5_STAGE2_UNLOCKED_AFTER_STAGE1_PAID=true' /tmp/v5.log
+          grep -q 'PROOFJUDGE_V5_COMPOSABLE_PROJECT_VERIFIED=true' /tmp/v5.log
+          ADDRESS="$(grep -oE 'PROOFJUDGE_V5_CONTRACT_ADDRESS=0x[a-fA-F0-9]{40}' /tmp/v5.log | tail -1 | cut -d= -f2)"
+          echo "contract_address=$ADDRESS" >> "$GITHUB_OUTPUT"
+      - name: Verify deployed V5 source
+        env:
+          CONTRACT_ADDRESS: ${{ steps.live.outputs.contract_address }}
+          CONTRACT_SOURCE_PATH: contracts/proof_judge_v5.py
+        run: node scripts/verify-deployed-source.mjs

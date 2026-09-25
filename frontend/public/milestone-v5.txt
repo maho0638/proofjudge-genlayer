@@ -1,0 +1,5 @@
+PROOFJUDGE_V5_COMPOSABLE_MILESTONES
+ProofJudge V5 adds ordered multi-milestone project chains.
+Later milestones remain locked until the previous milestone is PAID.
+The protocol exposes project progress and neutral participant settlement stats.
+A reusable TypeScript SDK exposes project reads, participant reads, settlement auditing, and write-request builders.
