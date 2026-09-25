@@ -13,6 +13,40 @@ def _field(value, name):
     return value.get(name) if isinstance(value, dict) else getattr(value, name)
 
 
+def _wait_for_job_status(contract, job_id, expected, timeout=120):
+    expected = set(expected)
+    deadline = time.time() + timeout
+    last_job = None
+    while time.time() < deadline:
+        last_job = contract.get_job(args=[job_id]).call()
+        status = str(_field(last_job, "status"))
+        if status in expected:
+            return last_job
+        time.sleep(3)
+    last_status = str(_field(last_job, "status")) if last_job is not None else "UNKNOWN"
+    raise AssertionError(
+        f"{job_id} did not reach {sorted(expected)}; last durable state was {last_status}"
+    )
+
+
+def _wait_for_project_paid(contract, project_id, expected_paid, timeout=120):
+    deadline = time.time() + timeout
+    last_progress = None
+    while time.time() < deadline:
+        last_progress = contract.get_project_progress(args=[project_id]).call()
+        if int(_field(last_progress, "paid_milestones")) == expected_paid:
+            return last_progress
+        time.sleep(3)
+    last_paid = (
+        int(_field(last_progress, "paid_milestones"))
+        if last_progress is not None
+        else -1
+    )
+    raise AssertionError(
+        f"{project_id} expected {expected_paid} PAID milestones; last durable count was {last_paid}"
+    )
+
+
 @pytest.mark.integration
 def test_proofjudge_v5_composable_project(default_account, accounts):
     assert len(accounts) >= 2
@@ -114,8 +148,7 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
     assert tx_execution_succeeded(resolve1)
     print(f"PROOFJUDGE_V5_STAGE1_RESOLVE_TX={resolve1.get('hash', '')}", flush=True)
 
-    job1 = contract.get_job(args=[stage1]).call()
-    assert str(_field(job1, "status")) == "APPROVED"
+    job1 = _wait_for_job_status(contract, stage1, {"APPROVED"})
     assert str(_field(job1, "policy_version")) == "PJ_V5_COMPOSABLE_MILESTONES"
 
     claim1 = contractor.claim_payment(args=[stage1]).transact(
@@ -124,6 +157,7 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
     assert tx_execution_succeeded(claim1)
     print(f"PROOFJUDGE_V5_STAGE1_CLAIM_TX={claim1.get('hash', '')}", flush=True)
 
+    _wait_for_job_status(contract, stage1, {"PAID"})
     assert bool(contract.is_milestone_unlocked(args=[stage2]).call()) is True
     print("PROOFJUDGE_V5_STAGE2_UNLOCKED_AFTER_STAGE1_PAID=true", flush=True)
 
@@ -141,8 +175,7 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
     assert tx_execution_succeeded(resolve2)
     print(f"PROOFJUDGE_V5_STAGE2_RESOLVE_TX={resolve2.get('hash', '')}", flush=True)
 
-    job2 = contract.get_job(args=[stage2]).call()
-    assert str(_field(job2, "status")) == "APPROVED"
+    job2 = _wait_for_job_status(contract, stage2, {"APPROVED"})
 
     claim2 = contractor.claim_payment(args=[stage2]).transact(
         wait_interval=10000, wait_retries=40
@@ -150,9 +183,9 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
     assert tx_execution_succeeded(claim2)
     print(f"PROOFJUDGE_V5_STAGE2_CLAIM_TX={claim2.get('hash', '')}", flush=True)
 
-    progress = contract.get_project_progress(args=[project]).call()
+    _wait_for_job_status(contract, stage2, {"PAID"})
+    progress = _wait_for_project_paid(contract, project, 2)
     assert int(_field(progress, "total_milestones")) == 2
-    assert int(_field(progress, "paid_milestones")) == 2
     assert int(_field(progress, "total_reward")) == reward * 2
     assert int(_field(progress, "settled_reward")) == reward * 2
 
@@ -215,8 +248,7 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
         flush=True,
     )
 
-    rejected = contract.get_job(args=[refund_job]).call()
-    assert str(_field(rejected, "status")) == "REJECTED"
+    rejected = _wait_for_job_status(contract, refund_job, {"REJECTED"})
     assert str(_field(rejected, "reason_code")) in {
         "EVIDENCE_GAP",
         "SOURCE_UNAVAILABLE",
@@ -238,8 +270,7 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
     assert tx_execution_succeeded(refund)
     print(f"PROOFJUDGE_V5_REFUND_TX={refund.get('hash', '')}", flush=True)
 
-    refunded = contract.get_job(args=[refund_job]).call()
-    assert str(_field(refunded, "status")) == "REFUNDED"
+    refunded = _wait_for_job_status(contract, refund_job, {"REFUNDED"})
     assert bool(_field(refunded, "reward_claimed")) is True
 
     final_contractor_stats = contract.get_participant_stats(
