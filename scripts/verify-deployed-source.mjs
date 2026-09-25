@@ -19,7 +19,8 @@ const sha256 = (value) => createHash("sha256").update(value, "utf8").digest("hex
 const deployedHash = sha256(deployedSource);
 const repositoryHash = sha256(repositorySource);
 
-console.log("CONTRACT_SOURCE_PATH=" + sourcePath);\nconsole.log("DEPLOYED_CONTRACT_ADDRESS=" + address);
+console.log("CONTRACT_SOURCE_PATH=" + sourcePath);
+console.log("DEPLOYED_CONTRACT_ADDRESS=" + address);
 console.log("DEPLOYED_SOURCE_SHA256=" + deployedHash);
 console.log("REPOSITORY_SOURCE_SHA256=" + repositoryHash);
 
