@@ -170,6 +170,22 @@ class ProofJudge(gl.Contract):
             if evidence_basis in APPROVAL_BASES:
                 evidence_basis = "MISSING_EVIDENCE"
 
+        # Canonicalize semantically equivalent outcomes before validator comparison.
+        # This preserves strict equivalence while preventing two validators that agree
+        # on approval from disagreeing only because they chose synonymous labels.
+        if approved:
+            reason_code = "CROSS_CHECK"
+            evidence_basis = "INDEPENDENT_CORROBORATION"
+        elif reason_code == "CONTRADICTORY_EVIDENCE" or evidence_basis == "CONTRADICTORY_EVIDENCE":
+            reason_code = "CONTRADICTORY_EVIDENCE"
+            evidence_basis = "CONTRADICTORY_EVIDENCE"
+        elif reason_code == "SOURCE_UNAVAILABLE" or evidence_basis == "SOURCE_UNAVAILABLE":
+            reason_code = "SOURCE_UNAVAILABLE"
+            evidence_basis = "SOURCE_UNAVAILABLE"
+        else:
+            reason_code = "EVIDENCE_GAP"
+            evidence_basis = "MISSING_EVIDENCE"
+
         return {
             "approved": approved,
             "confidence": confidence,

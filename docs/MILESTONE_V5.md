@@ -30,3 +30,10 @@ GenLayer's Builder Program states that points are assigned based on **novelty, c
 
 ## Promotion gates
 V5 becomes canonical only after direct tests, GenVM lint, SDK tests, frontend build, live two-stage Studionet settlement, and deployed-source equality all pass.
+
+
+## Consensus reliability hardening
+
+The V5 milestone also canonicalizes semantically equivalent validator labels before equivalence checks. Two validators that both approve the same evidence can no longer fail consensus merely because one selected `REQUIREMENT_FIT / RUBRIC_MATCH` while another selected `CROSS_CHECK / INDEPENDENT_CORROBORATION`. Approved outcomes use one canonical pair, while contradictory, unavailable, and insufficient-evidence failures retain distinct canonical failure classes.
+
+The live Studionet proof uses a larger consensus rotation budget and waits for durable on-chain state before treating a stage as complete. This is specifically intended to prove multi-stage settlement under real consensus rather than only transaction submission.

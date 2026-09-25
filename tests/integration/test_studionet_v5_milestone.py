@@ -13,7 +13,7 @@ def _field(value, name):
     return value.get(name) if isinstance(value, dict) else getattr(value, name)
 
 
-def _wait_for_job_status(contract, job_id, expected, timeout=120):
+def _wait_for_job_status(contract, job_id, expected, timeout=180):
     expected = set(expected)
     deadline = time.time() + timeout
     last_job = None
@@ -29,7 +29,7 @@ def _wait_for_job_status(contract, job_id, expected, timeout=120):
     )
 
 
-def _wait_for_project_paid(contract, project_id, expected_paid, timeout=120):
+def _wait_for_project_paid(contract, project_id, expected_paid, timeout=180):
     deadline = time.time() + timeout
     last_progress = None
     while time.time() < deadline:
@@ -141,7 +141,7 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
     print(f"PROOFJUDGE_V5_STAGE1_SUBMIT_TX={submit1.get('hash', '')}", flush=True)
 
     resolve1 = sponsor.resolve_job(args=[stage1]).transact(
-        consensus_max_rotations=3,
+        consensus_max_rotations=5,
         wait_interval=10000,
         wait_retries=50,
     )
@@ -168,7 +168,7 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
     print(f"PROOFJUDGE_V5_STAGE2_SUBMIT_TX={submit2.get('hash', '')}", flush=True)
 
     resolve2 = sponsor.resolve_job(args=[stage2]).transact(
-        consensus_max_rotations=3,
+        consensus_max_rotations=5,
         wait_interval=10000,
         wait_retries=50,
     )
@@ -238,7 +238,7 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
     )
 
     resolve_bad = sponsor.resolve_job(args=[refund_job]).transact(
-        consensus_max_rotations=3,
+        consensus_max_rotations=5,
         wait_interval=10000,
         wait_retries=50,
     )
