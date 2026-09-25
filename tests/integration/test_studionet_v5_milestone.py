@@ -131,7 +131,7 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
     primary = "https://proofjudge-genlayer-frontend.vercel.app/milestone-v5.txt"
     support = (
         "https://raw.githubusercontent.com/maho0638/"
-        "proofjudge-genlayer/main/docs/MILESTONE_V5.md"
+        "proofjudge-genlayer/main/docs/MILESTONE_V5_EVIDENCE.md"
     )
 
     submit1 = contractor.submit_evidence(
@@ -175,7 +175,16 @@ def test_proofjudge_v5_composable_project(default_account, accounts):
     assert tx_execution_succeeded(resolve2)
     print(f"PROOFJUDGE_V5_STAGE2_RESOLVE_TX={resolve2.get('hash', '')}", flush=True)
 
-    job2 = _wait_for_job_status(contract, stage2, {"APPROVED"})
+    job2 = _wait_for_job_status(contract, stage2, {"APPROVED", "REJECTED"})
+    if str(_field(job2, "status")) != "APPROVED":
+        raise AssertionError(
+            "Stage 2 consensus rejected reviewer evidence: "
+            + str(_field(job2, "reason_code"))
+            + " / "
+            + str(_field(job2, "evidence_basis"))
+            + " / "
+            + str(_field(job2, "rationale"))
+        )
 
     claim2 = contractor.claim_payment(args=[stage2]).transact(
         wait_interval=10000, wait_retries=40

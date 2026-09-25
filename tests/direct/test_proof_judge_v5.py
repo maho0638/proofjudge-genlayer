@@ -401,7 +401,7 @@ def test_validator_rejects_mutated_evidence_even_with_same_verdict(
     assert direct_vm.run_validator() is False
 
 
-def test_validator_requires_exact_reason_and_evidence_basis(
+def test_validator_canonicalizes_equivalent_positive_reason_and_basis(
     direct_vm, direct_deploy, direct_alice, direct_bob
 ):
     contract = direct_deploy("contracts/proof_judge_v5.py")
@@ -425,7 +425,7 @@ def test_validator_requires_exact_reason_and_evidence_basis(
         "RUBRIC_MATCH",
     )
 
-    assert direct_vm.run_validator() is False
+    assert direct_vm.run_validator() is True
 
 
 def test_resolution_stores_evidence_snapshots_and_basis(

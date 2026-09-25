@@ -37,3 +37,8 @@ V5 becomes canonical only after direct tests, GenVM lint, SDK tests, frontend bu
 The V5 milestone also canonicalizes semantically equivalent validator labels before equivalence checks. Two validators that both approve the same evidence can no longer fail consensus merely because one selected `REQUIREMENT_FIT / RUBRIC_MATCH` while another selected `CROSS_CHECK / INDEPENDENT_CORROBORATION`. Approved outcomes use one canonical pair, while contradictory, unavailable, and insufficient-evidence failures retain distinct canonical failure classes.
 
 The live Studionet proof uses a larger consensus rotation budget and waits for durable on-chain state before treating a stage as complete. This is specifically intended to prove multi-stage settlement under real consensus rather than only transaction submission.
+
+
+## Reviewer evidence surface
+
+The live two-stage proof uses `docs/MILESTONE_V5_EVIDENCE.md` as the independent GitHub-hosted evidence source. It is intentionally concise enough for the contract's bounded evidence snapshot while directly covering both the composable-protocol and reusable-SDK claims. This prevents a correct feature from being rejected merely because the relevant paragraph appears beyond the snapshot boundary in a long document.
